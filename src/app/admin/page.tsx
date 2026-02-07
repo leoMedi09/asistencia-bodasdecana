@@ -132,17 +132,83 @@ export default function AdminPage() {
     const exportToExcel = async () => {
         setIsGeneratingExcel(true)
         try {
-            const res = await fetch('/api/reports/attendance')
-            const data = await res.json()
+            const usersRes = await fetch('/api/users')
+            const allUsers: User[] = await usersRes.json()
 
-            if (!res.ok) throw new Error(data.error || 'Error al obtener datos')
+            const reportsRes = await fetch('/api/reports/attendance')
+            const allAttendances = await reportsRes.json()
 
-            const worksheet = XLSX.utils.json_to_sheet(data)
+            if (!usersRes.ok || !reportsRes.ok) throw new Error('Error al obtener datos')
+
+            const year = 2026
+            const daysInMonth = new Date(year, selectedMonth + 1, 0).getDate()
+            const meetingDates: { str: string, dateObject: Date }[] = []
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(year, selectedMonth, d)
+                const dayOfWeek = date.getDay()
+                if (dayOfWeek === 2 || dayOfWeek === 6) {
+                    meetingDates.push({
+                        str: format(date, 'dd/MM/yyyy'),
+                        dateObject: date
+                    })
+                }
+            }
+
+            // Crear el encabezado de las columnas
+            const tableColumn = ["ID", "NOMBRE Y APELLIDO", "N° COM", ...meetingDates.map(m => m.str)]
+
+            // Crear las filas de datos
+            const tableRows = allUsers.map(user => {
+                const row = [
+                    user.id.toString().padStart(4, '0'),
+                    user.fullName.toUpperCase(),
+                    user.communityNumber || '-'
+                ]
+
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+
+                meetingDates.forEach(mDate => {
+                    const attended = allAttendances.some((att: any) =>
+                        att.Nombre === user.fullName && att.Fecha === mDate.str
+                    )
+
+                    if (attended) {
+                        row.push('A')
+                    } else if (mDate.dateObject <= today) {
+                        row.push('F')
+                    } else {
+                        row.push('') // Future date
+                    }
+                })
+
+                return row
+            })
+
+            // Unir encabezados y filas
+            const worksheetData = [
+                [`COMUNIDAD CATOLICA BODAS DE CANA - ASISTENCIA ${months[selectedMonth]} 2026`],
+                [], // Espacio
+                tableColumn,
+                ...tableRows
+            ]
+
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
+
+            // Ajustar ancho de columnas para que se vea bien
+            const wscols = [
+                { wch: 8 },  // ID
+                { wch: 35 }, // Nombre
+                { wch: 10 }, // N° Com
+                ...meetingDates.map(() => ({ wch: 12 })) // Fechas
+            ]
+            worksheet['!cols'] = wscols
+
             const workbook = XLSX.utils.book_new()
             XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencia")
 
-            // Generate buffer and download
-            XLSX.writeFile(workbook, `Reporte_Asistencia_${new Date().toISOString().split('T')[0]}.xlsx`)
+            XLSX.writeFile(workbook, `Asistencia_${months[selectedMonth]}_2026.xlsx`)
         } catch (error) {
             console.error('Error exporting to Excel:', error)
             alert('Error al generar el reporte de Excel')
@@ -196,43 +262,54 @@ export default function AdminPage() {
             await new Promise(resolve => setTimeout(resolve, 100))
             cardElement.style.transition = 'none'
             const canvas = await html2canvas(cardElement, {
-                scale: 2,
+                scale: 3, // Higher scale for better QR readability on share
                 useCORS: true,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                logging: false,
+                onclone: (clonedDoc) => {
+                    // Ensure the cloned element is visible for capture
+                    const element = clonedDoc.getElementById(`card-${user.id}`)
+                    if (element && element.parentElement) {
+                        element.parentElement.style.display = 'block'
+                        element.parentElement.style.opacity = '1'
+                        element.parentElement.style.visibility = 'visible'
+                    }
+                }
             })
 
             cardElement.style.transition = ''
 
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    setDownloadingId(null)
-                    return
-                }
+            // Convert canvas to blob and share
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1.0))
 
-                const fileName = `carnet-${user.fullName.replace(/\s+/g, '-').toLowerCase()}.png`
-                const file = new File([blob], fileName, { type: 'image/png' })
-
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: `Carnet de Asistencia - ${user.fullName}`,
-                            text: `Aquí tienes tu carnet de asistencia para ${user.fullName}.`,
-                        })
-                    } catch (shareErr) {
-                        // User might have cancelled the share
-                        console.log('Compartir cancelado o fallido', shareErr)
-                    }
-                } else {
-                    // Manual download fallback
-                    const link = document.createElement('a')
-                    link.href = URL.createObjectURL(blob)
-                    link.download = fileName
-                    link.click()
-                    alert('Tu navegador no permite enviar fotos directo. Se guardó en tu galería.')
-                }
+            if (!blob) {
                 setDownloadingId(null)
-            }, 'image/png')
+                return
+            }
+
+            const fileName = `carnet-${user.fullName.replace(/\s+/g, '-').toLowerCase()}.png`
+            const file = new File([blob], fileName, { type: 'image/png' })
+
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: `Carnet`,
+                        text: `Carnet de Asistencia: ${user.fullName}`,
+                    })
+                } catch (shareErr: any) {
+                    if (shareErr.name !== 'AbortError') {
+                        console.error('Share error:', shareErr)
+                    }
+                }
+            } else {
+                // Manual download fallback
+                const link = document.createElement('a')
+                link.href = URL.createObjectURL(blob)
+                link.download = fileName
+                link.click()
+                alert('Tu celular no permite compartir directo. La imagen se descargó.')
+            }
         } catch (error) {
             console.error('Error sharing card:', error)
             setDownloadingId(null)
@@ -390,24 +467,6 @@ export default function AdminPage() {
                             Panel <span className="text-blue-600">Admin</span>
                         </h1>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={exportToExcel}
-                            disabled={isGeneratingExcel}
-                            className="flex-1 md:flex-none flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-4 py-3 rounded-2xl hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all font-bold border border-emerald-200 dark:border-emerald-800/50 text-sm"
-                        >
-                            {isGeneratingExcel ? <Loader2 className="animate-spin mr-2" size={16} /> : <Table className="mr-2" size={16} />}
-                            Excel
-                        </button>
-                        <button
-                            onClick={handlePrint}
-                            disabled={users.length === 0}
-                            className="flex-1 md:flex-none flex items-center justify-center bg-blue-600 text-white px-5 py-3 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-900/20 font-bold disabled:opacity-50 text-sm"
-                        >
-                            <Printer className="mr-2" size={16} /> Imprimir
-                        </button>
-                    </div>
                 </header>
 
                 <div className="mb-10 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl shadow-blue-500/10 flex flex-col lg:flex-row items-center justify-between gap-6 md:gap-8 overflow-hidden relative border border-white/10 bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700">
@@ -433,18 +492,32 @@ export default function AdminPage() {
                             ))}
                         </div>
                     </div>
-                    <button
-                        onClick={generateFullReportPDF}
-                        disabled={isGeneratingFullReport}
-                        className="w-full lg:w-auto z-10 bg-white text-blue-700 hover:bg-blue-50 px-8 py-4 rounded-2xl font-black text-lg transition-all active:scale-95 flex items-center justify-center shadow-2xl disabled:opacity-50 ring-4 ring-blue-400/30 group"
-                    >
-                        {isGeneratingFullReport ? (
-                            <Loader2 className="animate-spin mr-3" size={24} />
-                        ) : (
-                            <FileText className="mr-3 group-hover:rotate-12 transition-transform" size={24} />
-                        )}
-                        DESCARGAR {months[selectedMonth]}
-                    </button>
+                    <div className="z-10 flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                        <button
+                            onClick={exportToExcel}
+                            disabled={isGeneratingExcel}
+                            className="flex-1 lg:w-auto z-10 bg-emerald-600 text-white hover:bg-emerald-500 px-6 py-4 rounded-2xl font-black text-sm md:text-base transition-all active:scale-95 flex items-center justify-center shadow-2xl disabled:opacity-50 border-2 border-emerald-400/30 group"
+                        >
+                            {isGeneratingExcel ? (
+                                <Loader2 className="animate-spin mr-2" size={20} />
+                            ) : (
+                                <Table className="mr-2 group-hover:scale-110 transition-transform" size={20} />
+                            )}
+                            EXCEL {months[selectedMonth]}
+                        </button>
+                        <button
+                            onClick={generateFullReportPDF}
+                            disabled={isGeneratingFullReport}
+                            className="flex-1 lg:w-auto z-10 bg-white text-blue-700 hover:bg-blue-50 px-6 py-4 rounded-2xl font-black text-sm md:text-base transition-all active:scale-95 flex items-center justify-center shadow-2xl disabled:opacity-50 ring-4 ring-blue-400/30 group"
+                        >
+                            {isGeneratingFullReport ? (
+                                <Loader2 className="animate-spin mr-2" size={20} />
+                            ) : (
+                                <FileText className="mr-2 group-hover:rotate-12 transition-transform" size={20} />
+                            )}
+                            PDF {months[selectedMonth]}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Buscador y Selector de Vista */}
@@ -456,7 +529,7 @@ export default function AdminPage() {
                             placeholder="Buscar miembro..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-11 pr-6 py-3.5 md:py-4 bg-white dark:bg-slate-900 rounded-[1.2rem] md:rounded-[1.5rem] border-2 border-slate-100 dark:border-slate-800 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 shadow-xl shadow-slate-200/10 dark:shadow-none transition-all font-bold text-base md:text-lg"
+                            className="w-full pl-11 pr-6 py-3.5 md:py-4 bg-white dark:bg-slate-900 rounded-[1.2rem] md:rounded-[1.5rem] border-2 border-slate-100 dark:border-slate-800 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 shadow-xl shadow-slate-200/5 transition-all font-bold text-base md:text-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                         />
                     </div>
                     <div className="flex gap-2 overflow-x-auto md:overflow-visible no-scrollbar pb-1 md:pb-0">
@@ -492,33 +565,51 @@ export default function AdminPage() {
                 </div>
 
                 {/* Formulario de Agregar - Oculto al imprimir */}
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-8 print:hidden">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Registrar Nuevo Miembro</h2>
-                    <form onSubmit={handleAddUser} className="flex flex-col md:flex-row gap-4">
-                        <input
-                            type="text"
-                            value={newName}
-                            onChange={(e) => setNewName(e.target.value)}
-                            placeholder="Nombre completo"
-                            className="flex-1 p-3 border rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                            required
-                        />
-                        <input
-                            type="text"
-                            value={newCommunityNumber}
-                            onChange={(e) => setNewCommunityNumber(e.target.value)}
-                            placeholder="N° Comunidad"
-                            className="md:w-32 p-3 border rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                        />
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 flex items-center justify-center font-black disabled:opacity-50 transition-all active:scale-95"
-                        >
-                            {loading ? <Loader2 className="animate-spin" size={20} /> : <UserPlus className="mr-2" size={20} />}
-                            {loading ? 'Guardando...' : 'AGREGAR MIEMBRO'}
-                        </button>
-                    </form>
+                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border-2 border-slate-100 dark:border-slate-800 shadow-2xl relative overflow-hidden group mb-10 print:hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-green-500/10 transition-colors" />
+
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="bg-green-500/10 p-2.5 rounded-2xl">
+                                <UserPlus className="text-green-600" size={24} />
+                            </div>
+                            <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Registrar Nuevo Miembro</h2>
+                        </div>
+
+                        <form onSubmit={handleAddUser} className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                            <div className="md:col-span-7 flex flex-col gap-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre Completo</label>
+                                <input
+                                    type="text"
+                                    value={newName}
+                                    onChange={(e) => setNewName(e.target.value)}
+                                    placeholder="Ej. Juan Pérez"
+                                    className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-green-500/50 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
+                                    required
+                                />
+                            </div>
+                            <div className="md:col-span-2 flex flex-col gap-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Comunidad</label>
+                                <input
+                                    type="text"
+                                    value={newCommunityNumber}
+                                    onChange={(e) => setNewCommunityNumber(e.target.value)}
+                                    placeholder="N°"
+                                    className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-green-500/50 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white text-center"
+                                />
+                            </div>
+                            <div className="md:col-span-3 flex items-end">
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full bg-green-600 hover:bg-green-500 text-white p-4 h-[60px] md:h-full max-h-[60px] rounded-2xl font-black text-sm shadow-xl shadow-green-900/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {loading ? <Loader2 className="animate-spin" size={20} /> : <UserPlus size={20} />}
+                                    {loading ? 'GUARDANDO...' : 'REGISTRAR'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 {/* Lista de Carnets */}
@@ -529,61 +620,66 @@ export default function AdminPage() {
                         const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
                         return matchesName && matchesCommunity;
                     }).map((user) => (
-                        <div key={user.id} className={viewMode === 'grid' ? "flex flex-col gap-3" : "flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 hover:border-blue-300 transition-all"}>
-                            {viewMode === 'grid' ? (
-                                <>
-                                    {/* Card Content (Original) */}
-                                    <div
-                                        id={`card-${user.id}`}
-                                        className="card-to-pdf bg-white rounded-2xl p-6 shadow-sm flex flex-col items-center gap-4 break-inside-avoid print:border-black print:shadow-none"
-                                        style={{ backgroundColor: '#ffffff', border: '2px solid #f3f4f6' }}
-                                    >
-                                        <div className="w-full border-b pb-3 text-center" style={{ borderBottomColor: '#f3f4f6' }}>
-                                            <h3 className="font-bold text-lg text-gray-800 uppercase tracking-wide" style={{ color: '#1f2937' }}>{user.fullName}</h3>
-                                            <div className="flex items-center justify-center gap-2 mt-1">
-                                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter" style={{ color: '#3b82f6', backgroundColor: '#eff6ff' }}>Miembro Activo</span>
-                                                {user.communityNumber && (
-                                                    <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter" style={{ color: '#64748b', backgroundColor: '#f1f5f9' }}>Comunidad {user.communityNumber}</span>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="qr-container p-3 bg-white rounded-xl border shadow-inner" style={{ backgroundColor: '#ffffff', borderColor: '#f3f4f6' }}>
-                                            <QRCodeCanvas value={user.qrCode} size={160} level="H" />
-                                        </div>
-
-                                        <div className="text-center text-[10px] font-mono tracking-widest mt-2" style={{ color: '#9ca3af' }}>
-                                            ID: {user.id.toString().padStart(4, '0')}
+                        <div key={user.id} className={viewMode === 'grid' ? "flex flex-col gap-3" : "flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 hover:border-blue-300 transition-all gap-4"}>
+                            {/* Hidden Card for capture (Always present in DOM but hidden from view if in list mode) */}
+                            <div className={viewMode === 'grid' ? "" : "absolute -left-[9999px] top-0 opacity-0 pointer-events-none"}>
+                                <div
+                                    id={`card-${user.id}`}
+                                    className="card-to-pdf bg-white rounded-2xl p-6 shadow-sm flex flex-col items-center gap-4 break-inside-avoid print:border-black print:shadow-none"
+                                    style={{ backgroundColor: '#ffffff', border: '2px solid #f3f4f6', minWidth: '300px' }}
+                                >
+                                    <div className="w-full border-b pb-3 text-center" style={{ borderBottomColor: '#f3f4f6' }}>
+                                        <h3 className="font-bold text-lg text-gray-800 uppercase tracking-wide" style={{ color: '#1f2937' }}>{user.fullName}</h3>
+                                        <div className="flex items-center justify-center gap-2 mt-1">
+                                            <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter" style={{ color: '#3b82f6', backgroundColor: '#eff6ff' }}>Miembro Activo</span>
+                                            {user.communityNumber && (
+                                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter" style={{ color: '#64748b', backgroundColor: '#f1f5f9' }}>Comunidad {user.communityNumber}</span>
+                                            )}
                                         </div>
                                     </div>
 
+                                    <div className="qr-container p-3 bg-white rounded-xl border shadow-inner" style={{ backgroundColor: '#ffffff', borderColor: '#f3f4f6' }}>
+                                        <QRCodeCanvas value={user.qrCode} size={160} level="H" />
+                                    </div>
+
+                                    <div className="text-center text-[10px] font-mono tracking-widest mt-2" style={{ color: '#9ca3af' }}>
+                                        ID: {user.id.toString().padStart(4, '0')}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {viewMode === 'grid' ? (
+                                <>
                                     {/* Acciones (Grid) */}
-                                    <div className="flex flex-col gap-2 print:hidden">
+                                    <div className="flex flex-col gap-2 print:hidden w-full">
                                         <button
                                             onClick={() => handleShareCard(user)}
                                             disabled={downloadingId !== null}
                                             className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-emerald-900/10 active:scale-95 transition-all disabled:opacity-50"
                                         >
                                             {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
-                                            WhatsApp
+                                            Enviar por WhatsApp
                                         </button>
 
                                         <div className="grid grid-cols-3 gap-2">
                                             <button
                                                 onClick={() => openEditModal(user)}
                                                 className="flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200"
+                                                title="Editar"
                                             >
                                                 <Pencil size={18} />
                                             </button>
                                             <button
                                                 onClick={() => handleDownloadImage(user)}
                                                 className="flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200"
+                                                title="Descargar Foto"
                                             >
                                                 <Download size={18} />
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteUser(user)}
                                                 className="flex items-center justify-center bg-rose-50 text-rose-600 py-3 rounded-xl hover:bg-rose-100"
+                                                title="Eliminar"
                                             >
                                                 <Trash2 size={18} />
                                             </button>
@@ -592,29 +688,58 @@ export default function AdminPage() {
                                 </>
                             ) : (
                                 <>
-                                    {/* List Item View */}
-                                    <div className="flex-1 flex items-center gap-3 md:gap-4 min-w-0">
-                                        <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-xl flex-shrink-0">
-                                            <QRCodeSVG value={user.qrCode} size={32} />
+                                    {/* List Item View Optimized for Mobile */}
+                                    <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
+                                        <div className="bg-blue-50 dark:bg-blue-900/20 p-2.5 rounded-2xl flex-shrink-0 border border-blue-100/50 dark:border-blue-800/30">
+                                            <QRCodeSVG value={user.qrCode} size={40} />
                                         </div>
-                                        <div className="flex flex-col min-w-0">
-                                            <h3 className="font-bold text-slate-900 dark:text-white uppercase text-xs md:text-sm leading-tight truncate">{user.fullName}</h3>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-[9px] md:text-[10px] font-bold text-blue-600 dark:text-blue-400 shrink-0">ID: {user.id.toString().padStart(4, '0')}</span>
+                                        <div className="flex flex-col min-w-0 overflow-hidden">
+                                            <h3 className="font-bold text-slate-900 dark:text-white uppercase text-sm md:text-base leading-tight truncate">
+                                                {user.fullName}
+                                            </h3>
+                                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                                                <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
+                                                    ID: {user.id.toString().padStart(4, '0')}
+                                                </span>
                                                 {user.communityNumber && (
-                                                    <span className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 truncate">• Com. {user.communityNumber}</span>
+                                                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                                        <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
+                                                        Com. {user.communityNumber}
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1 md:gap-2 print:hidden ml-2 flex-shrink-0">
-                                        <button onClick={() => openEditModal(user)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="Editar">
+
+                                    <div className="flex items-center gap-1.5 print:hidden ml-auto">
+                                        <button
+                                            onClick={() => openEditModal(user)}
+                                            className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95"
+                                            title="Editar"
+                                        >
                                             <Pencil size={18} />
                                         </button>
-                                        <button onClick={() => handleShareCard(user)} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-all" title="WhatsApp">
-                                            <Share2 size={18} />
+                                        <button
+                                            onClick={() => handleShareCard(user)}
+                                            disabled={downloadingId !== null}
+                                            className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95 disabled:opacity-50"
+                                            title="WhatsApp"
+                                        >
+                                            {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
                                         </button>
-                                        <button onClick={() => handleDeleteUser(user)} className="hidden md:flex p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all" title="Eliminar">
+                                        <button
+                                            onClick={() => handleDownloadImage(user)}
+                                            disabled={downloadingId !== null}
+                                            className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95 disabled:opacity-50"
+                                            title="Descargar Foto"
+                                        >
+                                            <Download size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteUser(user)}
+                                            className="p-2.5 bg-slate-100 dark:bg-slate-800 text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-all active:scale-95"
+                                            title="Eliminar"
+                                        >
                                             <Trash2 size={18} />
                                         </button>
                                     </div>
