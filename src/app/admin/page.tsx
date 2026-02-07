@@ -42,9 +42,14 @@ export default function AdminPage() {
     ]
 
     const fetchUsers = async () => {
-        const res = await fetch('/api/users')
-        const data = await res.json()
-        setUsers(data)
+        try {
+            const res = await fetch('/api/users')
+            const data = await res.json()
+            setUsers(Array.isArray(data) ? data : [])
+        } catch (e) {
+            console.error(e)
+            setUsers([])
+        }
     }
 
     useEffect(() => {
@@ -515,7 +520,7 @@ export default function AdminPage() {
                 {/* Lista de Carnets */}
                 {/* Lista de Miembros */}
                 <div ref={cardsContainerRef} className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 print:grid-cols-2 print:gap-4" : "flex flex-col gap-4"}>
-                    {users.filter(u => {
+                    {Array.isArray(users) && users.filter(u => {
                         const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
                         const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
                         return matchesName && matchesCommunity;
