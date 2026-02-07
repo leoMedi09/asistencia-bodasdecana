@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  fullName        String
+  communityNumber String?
+  qrCode          String   @unique @default(uuid())
+  isActive        Boolean  @default(true)
+  attendances Attendance[]
+  createdAt DateTime @default(now())
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  timestamp DateTime @default(now())
+}
