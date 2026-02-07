@@ -49,41 +49,6 @@ export async function POST(request: Request) {
             data: { userId: user.id },
         })
 
-        // --- Sincronización con Google Sheets ---
-        const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
-        if (webhookUrl) {
-            try {
-                // Usamos la fecha actual para el envío (más fiable que el objeto retornado)
-                const now = new Date();
-                const payload = {
-                    fecha: format(now, 'dd/MM/yyyy', { locale: es }),
-                    hora: format(now, 'HH:mm:ss', { locale: es }),
-                    nombre: user.fullName,
-                    id: user.id.toString(),
-                    status: existingAttendance ? "RE-ESCANEO" : "NUEVO"
-                };
-
-                console.log('Enviando a Google Sheets:', payload);
-
-                const response = await fetch(webhookUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                });
-
-                if (response.ok) {
-                    console.log('Sincronización con Google Sheets exitosa');
-                } else {
-                    const errorText = await response.text();
-                    console.error('Respuesta de Google Sheets no exitosa:', errorText);
-                }
-            } catch (err) {
-                console.error('Error crítico sincronizando con Sheets:', err);
-            }
-        }
-
         return NextResponse.json({
             success: true,
             alreadyRegistered: !!existingAttendance,
