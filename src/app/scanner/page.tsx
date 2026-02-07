@@ -59,9 +59,9 @@ export default function ScannerPage() {
     }, [status])
 
     return (
-        <div className={`min-h-screen flex flex-col items-center justify-center p-4 transition-all duration-700 ${status === 'success' ? 'bg-emerald-500' :
-            status === 'error' ? 'bg-rose-500' :
-                'bg-slate-950'
+        <div className={`min-h-screen flex flex-col items-center justify-center p-4 transition-all duration-700 ${status === 'success'
+                ? (message.includes('ya registramos') ? 'bg-amber-500' : 'bg-emerald-500')
+                : status === 'error' ? 'bg-rose-500' : 'bg-slate-950'
             }`}>
             {/* Botón Volver */}
             <Link href="/" className="absolute top-6 left-6 p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl shadow-xl text-white transition-all active:scale-95 group">
@@ -88,8 +88,8 @@ export default function ScannerPage() {
                     {/* Feedback Visual: Éxito */}
                     {status === 'success' && (
                         <div className={`absolute inset-0 z-[100] flex flex-col items-center justify-center rounded-2xl animate-in fade-in zoom-in duration-500 overflow-hidden ${message.includes('ya registramos')
-                                ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600'
-                                : 'bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-600'
+                            ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600'
+                            : 'bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-600'
                             }`}>
                             {/* Decorative background circle */}
                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-white/10 rounded-full blur-[100px] pointer-events-none" />
@@ -100,25 +100,35 @@ export default function ScannerPage() {
                             </div>
 
                             <div className="px-8 text-center relative z-10">
-                                <div className="inline-block bg-white/30 backdrop-blur-md text-white text-[10px] md:text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-[0.2em] mb-6 border border-white/20">
+                                <div className={`inline-block backdrop-blur-md text-[10px] md:text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-[0.2em] mb-6 border ${message.includes('ya registramos')
+                                        ? 'bg-black/10 text-slate-900 border-black/10'
+                                        : 'bg-white/30 text-white border-white/20'
+                                    }`}>
                                     {message.includes('ya registramos') ? 'Aviso de Registro' : 'Asistencia Confirmada'}
                                 </div>
-                                <h2 className="text-4xl md:text-6xl font-black text-white leading-[0.9] mb-4 drop-shadow-2xl uppercase tracking-tighter">
+                                <h2 className={`text-4xl md:text-6xl font-black leading-[0.9] mb-4 drop-shadow-2xl uppercase tracking-tighter ${message.includes('ya registramos') ? 'text-slate-900' : 'text-white'
+                                    }`}>
                                     {message.includes('ya registramos') ? (
-                                        <>YA ESTÁS <br /> <span className="text-amber-200">REGISTRADO/A</span></>
+                                        <>YA ESTÁS <br /> <span className="text-amber-100">REGISTRADO/A</span></>
                                     ) : (
                                         <>¡MUCHAS <br /> <span className="text-emerald-200">GRACIAS!</span></>
                                     )}
                                 </h2>
-                                <div className="h-1 w-20 bg-white/40 mx-auto mb-6 rounded-full" />
-                                <p className="text-white font-bold text-2xl md:text-3xl tracking-tight drop-shadow-md">
+                                <div className={`h-1 w-20 mx-auto mb-6 rounded-full ${message.includes('ya registramos') ? 'bg-slate-900/40' : 'bg-white/40'
+                                    }`} />
+                                <p className={`font-bold text-2xl md:text-3xl tracking-tight drop-shadow-md ${message.includes('ya registramos') ? 'text-slate-800' : 'text-white'
+                                    }`}>
                                     {lastUser}
                                 </p>
                             </div>
 
-                            <div className="absolute bottom-8 flex items-center gap-2 px-5 py-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm">
-                                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                                <p className="text-white text-[10px] font-black uppercase tracking-[0.2em]">Acceso Concedido • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            <div className={`absolute bottom-8 flex items-center gap-2 px-5 py-2 rounded-full border backdrop-blur-sm ${message.includes('ya registramos')
+                                    ? 'border-black/10 bg-black/5 text-slate-900'
+                                    : 'border-white/20 bg-white/10 text-white'
+                                }`}>
+                                <div className={`w-2 h-2 rounded-full animate-pulse ${message.includes('ya registramos') ? 'bg-slate-900' : 'bg-white'
+                                    }`} />
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em]">Acceso Concedido • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
                         </div>
                     )}

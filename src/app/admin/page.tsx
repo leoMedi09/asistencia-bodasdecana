@@ -208,7 +208,30 @@ export default function AdminPage() {
             const workbook = XLSX.utils.book_new()
             XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencia")
 
-            XLSX.writeFile(workbook, `Asistencia_${months[selectedMonth]}_2026.xlsx`)
+            // Generate Excel file
+            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+            const fileName = `Asistencia_${months[selectedMonth]}_2026.xlsx`
+            const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+            const file = new File([blob], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: `Reporte Asistencia - ${months[selectedMonth]}`,
+                        text: `Reporte de asistencia de la comunidad bdc - ${months[selectedMonth]} 2026`,
+                    })
+                } catch (shareErr: any) {
+                    if (shareErr.name !== 'AbortError') {
+                        console.error('Share error:', shareErr)
+                        // Fallback to manual download
+                        XLSX.writeFile(workbook, fileName)
+                    }
+                }
+            } else {
+                // Regular browser download
+                XLSX.writeFile(workbook, fileName)
+            }
         } catch (error) {
             console.error('Error exporting to Excel:', error)
             alert('Error al generar el reporte de Excel')
