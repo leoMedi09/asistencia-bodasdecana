@@ -34,6 +34,7 @@ export default function AdminPage() {
     const [editName, setEditName] = useState('')
     const [editCommunityNumber, setEditCommunityNumber] = useState('')
     const [selectedCommunity, setSelectedCommunity] = useState<string>('all')
+    const [isMounted, setIsMounted] = useState(false)
     const cardsContainerRef = useRef<HTMLDivElement>(null)
 
     const months = [
@@ -53,6 +54,7 @@ export default function AdminPage() {
     }
 
     useEffect(() => {
+        setIsMounted(true)
         fetchUsers()
     }, [])
 
@@ -372,6 +374,8 @@ export default function AdminPage() {
             setIsGeneratingFullReport(false)
         }
     }
+
+    if (!isMounted) return null;
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 animate-fade-in">
