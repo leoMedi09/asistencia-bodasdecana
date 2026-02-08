@@ -509,9 +509,9 @@ export default function AdminPage() {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 animate-fade-in">
             <div className="max-w-6xl mx-auto">
-                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 print:hidden px-2">
+                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 print:hidden">
                     <div className="flex flex-col gap-4">
-                        <Link href="/" className="p-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl text-slate-500 hover:text-blue-600 transition-all active:scale-95 group w-fit">
+                        <Link href="/" className="p-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl text-slate-500 hover:text-blue-600 transition-all active:scale-95 group w-fit -ml-1">
                             <ArrowLeft className="group-hover:-translate-x-1 transition-transform" size={20} strokeWidth={2.5} />
                         </Link>
                         <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
