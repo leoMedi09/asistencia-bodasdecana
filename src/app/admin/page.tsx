@@ -619,6 +619,7 @@ export default function AdminPage() {
                                     onChange={(e) => setNewCommunityNumber(e.target.value)}
                                     placeholder="N°"
                                     className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-green-500/50 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white text-center"
+                                    required
                                 />
                             </div>
                             <div className="md:col-span-3 flex items-end">

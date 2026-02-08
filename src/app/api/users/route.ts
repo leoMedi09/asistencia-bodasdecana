@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 
 export async function GET() {
     try {
@@ -15,10 +16,15 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const { fullName, communityNumber } = await request.json()
+
+        // Generamos el QR explícitamente para asegurar consistencia inmediata
+        const qrCode = randomUUID()
+
         const user = await prisma.user.create({
             data: {
                 fullName,
-                communityNumber: communityNumber || null
+                communityNumber: communityNumber || null,
+                qrCode
             },
         })
         return NextResponse.json(user)
