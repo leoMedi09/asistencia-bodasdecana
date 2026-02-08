@@ -534,7 +534,7 @@ export default function AdminPage() {
                                 <select
                                     value={selectedMonth}
                                     onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                    className="w-full bg-white/10 hover:bg-white/20 text-white font-black py-3 px-5 rounded-2xl border-2 border-white/10 outline-none appearance-none transition-all cursor-pointer text-sm"
+                                    className="w-full bg-white/10 hover:bg-white/20 text-white font-black py-3 px-5 rounded-2xl border-2 border-white/10 outline-none transition-all cursor-pointer text-sm"
                                 >
                                     {months.map((month, index) => (
                                         <option key={month} value={index} className="bg-slate-900 text-white font-bold py-2">
@@ -542,11 +542,6 @@ export default function AdminPage() {
                                         </option>
                                     ))}
                                 </select>
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/50 group-hover:text-white transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
                             </div>
                         </div>
                     </div>

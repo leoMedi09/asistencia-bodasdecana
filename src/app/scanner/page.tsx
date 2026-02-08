@@ -63,16 +63,16 @@ export default function ScannerPage() {
             ? (message.includes('ya registramos') ? 'bg-amber-500 text-slate-950' : 'bg-emerald-500 text-white')
             : status === 'error' ? 'bg-rose-500 text-white' : 'bg-slate-950 text-white'
             }`}>
-            {/* Botón Volver - Alineado con el contenedor */}
-            <div className="w-full max-w-xl px-4 mt-6">
-                <Link href="/" className="inline-flex p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 shadow-xl text-white transition-all active:scale-95 group">
+            {/* Botón Volver - Centrado con el contenedor */}
+            <div className="w-full max-w-xl px-4 mt-6 flex justify-center md:justify-start">
+                <Link href="/" className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 shadow-xl text-white transition-all active:scale-95 group">
                     <ArrowLeft className="group-hover:-translate-x-1 transition-transform" size={20} strokeWidth={2.5} />
                 </Link>
             </div>
 
-            <div className="w-full max-w-xl flex flex-col items-start flex-1 justify-center py-4 md:py-8 px-4">
-                {/* Encabezado Responsivo Alineado a la Izquierda */}
-                <div className="text-left mb-6 md:mb-10 animate-in fade-in slide-in-from-top-4 duration-700 w-full">
+            <div className="w-full max-w-xl flex flex-col items-center flex-1 justify-center py-4 md:py-8 px-4">
+                {/* Encabezado Responsivo Centrado */}
+                <div className="text-center mb-6 md:mb-10 animate-in fade-in slide-in-from-top-4 duration-700 w-full">
                     <div className={`inline-block px-3 py-1 rounded-full mb-3 md:mb-4 border ${status === 'success' && message.includes('ya registramos')
                         ? 'bg-black/10 border-black/20'
                         : 'bg-blue-500/10 border-blue-500/20'}`}>
@@ -81,8 +81,7 @@ export default function ScannerPage() {
                         </span>
                     </div>
                     <h1 className={`text-3xl md:text-6xl font-black mb-2 md:mb-3 tracking-tighter drop-shadow-2xl ${status === 'success' && message.includes('ya registramos') ? 'text-black' : 'text-white'}`}>
-                        ESCÁNER DE <br />
-                        <span className={status === 'success' && message.includes('ya registramos') ? 'text-black' : 'text-blue-500'}>ACCESO</span>
+                        ESCÁNER DE ACCESO
                     </h1>
                     <p className={`text-xs md:text-base font-medium tracking-wide ${status === 'success' && message.includes('ya registramos') ? 'text-black/80' : 'text-slate-400 opacity-80'}`}>
                         Muestra tu tarjeta frente a la cámara del dispositivo
