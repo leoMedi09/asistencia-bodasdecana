@@ -2,7 +2,7 @@
 import ScannerPlugin from '@/components/ScannerPlugin'
 import { useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, AlertCircle, Loader2, RefreshCw } from 'lucide-react'
 
 export default function ScannerPage() {
     const [message, setMessage] = useState<string>('Escanee su código QR')
@@ -32,12 +32,12 @@ export default function ScannerPage() {
                     }
                     setStatus('success')
 
-                    // Auto reset after 4 seconds
+                    // Auto reset after 2 seconds
                     setTimeout(() => {
                         setStatus('idle')
                         setMessage('Escanee su código QR')
                         isProcessing.current = false
-                    }, 4000)
+                    }, 2000)
                 } else {
                     setMessage(`Error: ${data.error || 'Código no reconocido'}`)
                     setStatus('error')
@@ -60,90 +60,141 @@ export default function ScannerPage() {
 
     return (
         <div className={`min-h-screen flex flex-col items-center justify-center p-4 transition-all duration-700 ${status === 'success'
-            ? (message.includes('ya registramos') ? 'bg-amber-500' : 'bg-emerald-500')
-            : status === 'error' ? 'bg-rose-500' : 'bg-slate-950'
+            ? (message.includes('ya registramos') ? 'bg-amber-500 text-slate-950' : 'bg-emerald-500 text-white')
+            : status === 'error' ? 'bg-rose-500 text-white' : 'bg-slate-950 text-white'
             }`}>
             {/* Botón Volver */}
-            <Link href="/" className="absolute top-6 left-6 p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl shadow-xl text-white transition-all active:scale-95 group">
-                <ArrowLeft className="group-hover:-translate-x-1 transition-transform" />
+            <Link href="/" className="absolute top-6 left-6 p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 shadow-xl text-white transition-all active:scale-95 group">
+                <ArrowLeft className="group-hover:-translate-x-1 transition-transform" size={20} strokeWidth={2.5} />
             </Link>
 
-            <div className="w-full max-w-xl flex flex-col items-center">
-                {/* Encabezado */}
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-black text-white mb-2 tracking-tight">ESCÁNER DE ACCESO</h1>
-                    <p className="text-slate-400 font-medium">Muestra tu tarjeta frente a la cámara</p>
+            <div className="w-full max-w-xl flex flex-col items-center flex-1 justify-center py-4 md:py-8">
+                {/* Encabezado Responsivo */}
+                <div className="text-center mb-6 md:mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+                    <div className={`inline-block px-3 py-1 rounded-full mb-3 md:mb-4 border ${status === 'success' && message.includes('ya registramos')
+                        ? 'bg-black/10 border-black/20'
+                        : 'bg-blue-500/10 border-blue-500/20'}`}>
+                        <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] ${status === 'success' && message.includes('ya registramos') ? 'text-black' : 'text-blue-400'}`}>
+                            Control de Acceso v2.0
+                        </span>
+                    </div>
+                    <h1 className={`text-3xl md:text-6xl font-black mb-2 md:mb-3 tracking-tighter drop-shadow-2xl ${status === 'success' && message.includes('ya registramos') ? 'text-black' : 'text-white'}`}>
+                        ESCÁNER DE <span className={status === 'success' && message.includes('ya registramos') ? 'text-black' : 'text-blue-500'}>ACCESO</span>
+                    </h1>
+                    <p className={`text-xs md:text-base font-medium tracking-wide px-4 ${status === 'success' && message.includes('ya registramos') ? 'text-black/80' : 'text-slate-400 opacity-80'}`}>
+                        Muestra tu tarjeta frente a la cámara del dispositivo
+                    </p>
                 </div>
 
                 {/* Contenedor del Escáner */}
                 <div className="w-full relative">
-                    {/* Feedback Visual: Cargando */}
+                    {/* Feedback Visual: Cargando (Moderno) */}
                     {status === 'loading' && (
-                        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm rounded-2xl">
-                            <Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-4" />
-                            <p className="text-white font-bold text-xl">Verificando...</p>
+                        <div className="absolute inset-0 z-[110] flex flex-col items-center justify-center bg-slate-950/40 backdrop-blur-xl rounded-3xl animate-in fade-in zoom-in duration-300">
+                            <div className="relative">
+                                <div className="w-20 h-20 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+                                <Loader2 className="w-8 h-8 text-blue-500 animate-pulse absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                            </div>
+                            <p className="text-white font-black text-2xl mt-6 tracking-tight animate-pulse">VERIFICANDO...</p>
+                            <p className="text-slate-400 text-xs font-bold mt-2 uppercase tracking-widest opacity-60">Consultando base de datos</p>
                         </div>
                     )}
 
-                    {/* Feedback Visual: Éxito */}
+                    {/* Feedback Visual: Éxito/Alerta */}
                     {status === 'success' && (
-                        <div className={`absolute inset-0 z-[100] flex flex-col items-center justify-center rounded-2xl animate-in fade-in zoom-in duration-500 overflow-hidden ${message.includes('ya registramos')
+                        <div className={`absolute inset-0 z-[100] flex flex-col items-center justify-between p-6 rounded-3xl animate-in fade-in zoom-in duration-300 overflow-hidden ${message.includes('ya registramos')
                             ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600'
                             : 'bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-600'
                             }`}>
-                            {/* Decorative background circle */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-white/10 rounded-full blur-[100px] pointer-events-none" />
 
-                            <div className="bg-white rounded-full p-8 mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.2)] animate-in zoom-in-50 duration-500 relative z-10">
-                                <CheckCircle2 className={`w-20 h-20 md:w-28 md:h-28 ${message.includes('ya registramos') ? 'text-amber-500' : 'text-emerald-500'
-                                    }`} strokeWidth={3} />
+                            {/* Círculos decorativos de fondo */}
+                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-black/10 rounded-full blur-2xl pointer-events-none" />
+
+                            {/* Icono Principal Compacto */}
+                            <div className="relative z-10 mt-1">
+                                <div className="bg-white rounded-full p-3 shadow-xl animate-in zoom-in-50 duration-500">
+                                    <CheckCircle2 className={`w-12 h-12 md:w-14 md:h-14 ${message.includes('ya registramos') ? 'text-amber-500' : 'text-emerald-500'
+                                        }`} strokeWidth={3} />
+                                </div>
                             </div>
 
-                            <div className="px-8 text-center relative z-10">
-                                <div className={`inline-block backdrop-blur-md text-[10px] md:text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-[0.2em] mb-6 border ${message.includes('ya registramos')
-                                        ? 'bg-black/5 text-black border-black/10'
-                                        : 'bg-white/30 text-white border-white/20'
+                            <div className="w-full px-2 text-center relative z-10 flex flex-col items-center flex-1 justify-center py-2">
+                                <div className={`inline-block backdrop-blur-md text-[8px] md:text-xs font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] mb-2 border ${message.includes('ya registramos')
+                                    ? 'bg-black/10 text-black border-black/20'
+                                    : 'bg-white/20 text-white border-white/30'
                                     }`}>
-                                    {message.includes('ya registramos') ? 'Aviso de Registro' : 'Asistencia Confirmada'}
+                                    {message.includes('ya registramos') ? '⚠️ ALERTA DE REGISTRO' : '✅ ASISTENCIA CONFIRMADA'}
                                 </div>
-                                <h2 className={`text-4xl md:text-6xl font-black leading-[0.9] mb-4 drop-shadow-xl uppercase tracking-tighter ${message.includes('ya registramos') ? 'text-black' : 'text-white'
+
+                                <h2 className={`text-2xl md:text-4xl font-black leading-none drop-shadow-2xl uppercase tracking-tighter ${message.includes('ya registramos') ? 'text-black' : 'text-white'
                                     }`}>
                                     {message.includes('ya registramos') ? (
-                                        <>YA FUE <br /> <span className="text-black/60">REGISTRADO</span></>
+                                        <div className="flex flex-col items-center gap-0.5">
+                                            <span className="text-lg md:text-xl font-bold">YA FUE</span>
+                                            <span className="leading-none">REGISTRADO</span>
+                                        </div>
                                     ) : (
-                                        <>¡MUCHAS <br /> <span className="text-emerald-200">GRACIAS!</span></>
+                                        <div className="flex flex-col items-center gap-0.5">
+                                            <span className="text-lg md:text-xl opacity-80">¡MUCHAS</span>
+                                            <span className="text-emerald-50/90 leading-none">GRACIAS!</span>
+                                        </div>
                                     )}
                                 </h2>
-                                <div className={`h-1 w-20 mx-auto mb-6 rounded-full ${message.includes('ya registramos') ? 'bg-black/20' : 'bg-white/40'
+
+                                <div className={`h-1 w-10 mx-auto my-2 rounded-full ${message.includes('ya registramos') ? 'bg-black/20' : 'bg-white/40'
                                     }`} />
-                                <p className={`font-bold text-2xl md:text-3xl tracking-tight drop-shadow-sm ${message.includes('ya registramos') ? 'text-black' : 'text-white'
+
+                                <p className={`font-black text-lg md:text-2xl tracking-tight drop-shadow-lg leading-tight w-full line-clamp-2 px-4 ${message.includes('ya registramos') ? 'text-black' : 'text-white'
                                     }`}>
                                     {lastUser}
                                 </p>
                             </div>
 
-                            <div className={`absolute bottom-8 flex items-center gap-2 px-5 py-2 rounded-full border backdrop-blur-sm ${message.includes('ya registramos')
-                                    ? 'border-black/10 bg-black/5 text-black'
-                                    : 'border-white/20 bg-white/10 text-white'
-                                }`}>
-                                <div className={`w-2 h-2 rounded-full animate-pulse ${message.includes('ya registramos') ? 'bg-black' : 'bg-white'
-                                    }`} />
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em]">Acceso Concedido • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            {/* Acciones y Footer */}
+                            <div className="relative z-10 w-full max-w-[220px] mb-2">
+                                <button
+                                    onClick={() => {
+                                        setStatus('idle')
+                                        setMessage('Escanee su código QR')
+                                        isProcessing.current = false
+                                    }}
+                                    className={`w-full py-3 rounded-2xl font-black text-xs shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 ${message.includes('ya registramos')
+                                        ? 'bg-black text-amber-500 border border-amber-500/20'
+                                        : 'bg-white text-emerald-600 hover:bg-emerald-50'
+                                        }`}
+                                >
+                                    <RefreshCw size={16} strokeWidth={3} />
+                                    <span>ESCANEAR SIGUIENTE</span>
+                                </button>
+                                <div className={`flex justify-center items-center gap-2 mt-2 opacity-60 font-bold uppercase tracking-widest text-[8px] ${message.includes('ya registramos') ? 'text-black' : 'text-white'}`}>
+                                    <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    <span className="w-1 h-1 bg-current rounded-full" />
+                                    <span>T-01</span>
+                                </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Feedback Visual: Error */}
+                    {/* Feedback Visual: Error (Moderno) */}
                     {status === 'error' && (
-                        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-rose-500 rounded-2xl animate-in fade-in zoom-in duration-300">
-                            <AlertCircle className="w-28 h-28 text-white mb-6 animate-pulse" />
-                            <h2 className="text-3xl font-bold text-white text-center px-10">
-                                {message}
-                            </h2>
+                        <div className="absolute inset-0 z-[110] flex flex-col items-center justify-center p-8 bg-rose-500 rounded-3xl animate-in fade-in zoom-in duration-300 overflow-hidden text-white">
+                            <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+
+                            <div className="bg-white/20 backdrop-blur-md rounded-full p-6 mb-6 border border-white/30 animate-bounce duration-1000">
+                                <AlertCircle className="w-16 h-16 text-white" />
+                            </div>
+
+                            <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">Error de Lectura</h2>
+                            <p className="text-xl font-bold text-center px-4 leading-tight opacity-90 drop-shadow-md">
+                                {message.replace('Error: ', '')}
+                            </p>
+
                             <button
                                 onClick={() => setStatus('idle')}
-                                className="mt-8 bg-white text-rose-600 px-8 py-3 rounded-xl font-bold hover:bg-rose-50 shadow-xl transition-all"
+                                className="mt-10 bg-white text-rose-600 px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                             >
+                                <RefreshCw size={18} strokeWidth={3} />
                                 Reintentar
                             </button>
                         </div>
@@ -154,10 +205,18 @@ export default function ScannerPage() {
                     />
                 </div>
 
-                {/* Footer info */}
-                <div className="mt-12 flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-3 rounded-2xl backdrop-blur-sm">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-slate-400 text-sm font-medium uppercase tracking-widest">Sistema Operativo • Terminal 01</span>
+                {/* Footer Status Bar Premium - Ajustado para móviles y contraste */}
+                <div className={`mt-8 md:mt-14 flex items-center gap-3 md:gap-4 border px-6 md:px-8 py-3 md:py-4 rounded-2xl md:rounded-3xl backdrop-blur-xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-1000 ${status === 'success' && message.includes('ya registramos')
+                    ? 'bg-black/5 border-black/10'
+                    : 'bg-white/5 border-white/10'}`}>
+                    <div className="relative">
+                        <div className={`w-2 md:w-3 h-2 md:h-3 rounded-full animate-ping absolute inset-0 ${status === 'success' && message.includes('ya registramos') ? 'bg-black' : 'bg-emerald-500'}`} />
+                        <div className={`w-2 md:w-3 h-2 md:h-3 rounded-full relative z-10 shadow-[0_0_10px_rgba(0,0,0,0.3)] ${status === 'success' && message.includes('ya registramos') ? 'bg-black' : 'bg-emerald-500 shadow-[#10b981]'}`} />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] leading-none ${status === 'success' && message.includes('ya registramos') ? 'text-black' : 'text-white'}`}>Sistema Activo</span>
+                        <span className={`text-[6px] md:text-[8px] font-bold uppercase tracking-widest mt-1 ${status === 'success' && message.includes('ya registramos') ? 'text-black/60' : 'text-slate-500'}`}>Terminal 01 • Conexión Segura SSL</span>
+                    </div>
                 </div>
             </div>
         </div>

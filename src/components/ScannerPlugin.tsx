@@ -70,6 +70,11 @@ const ScannerPlugin = (props: ScannerProps) => {
             } catch (err) {
                 console.error("Error scanning file:", err)
                 setError("No se encontró ningún código QR en la imagen. Intenta con una foto más clara.")
+            } finally {
+                // Reset input to allow selecting the same file again
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = ''
+                }
             }
         }
     }
@@ -81,36 +86,36 @@ const ScannerPlugin = (props: ScannerProps) => {
     }, [])
 
     return (
-        <div className="relative w-full overflow-hidden rounded-3xl bg-slate-900 border-4 border-slate-800 shadow-2xl">
-            {/* Área del Escáner */}
-            <div id="reader" className="w-full min-h-[480px] md:min-h-[420px] bg-black overflow-hidden" />
+        <div className="relative w-full overflow-hidden rounded-3xl bg-slate-900 border-4 border-slate-800 shadow-2xl transition-all duration-500">
+            {/* Área del Escáner con altura responsiva */}
+            <div id="reader" className="w-full min-h-[360px] md:min-h-[420px] bg-black overflow-hidden" />
 
             {/* Capa de UI sobre el vídeo */}
             {!isScanning && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm transition-all duration-300">
-                    <div className="bg-blue-600/20 p-5 rounded-full mb-4 border-2 border-blue-500/50 animate-pulse">
-                        <Camera className="w-10 h-10 text-blue-400" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 md:p-6 bg-slate-900/80 backdrop-blur-sm transition-all duration-300">
+                    <div className="bg-blue-600/20 p-4 md:p-5 rounded-full mb-3 md:mb-4 border-2 border-blue-500/50 animate-pulse">
+                        <Camera className="w-8 h-8 md:w-10 md:h-10 text-blue-400" />
                     </div>
-                    <h3 className="text-2xl font-black text-white mb-1 text-center tracking-tight">REGISTRO DE ACCESO</h3>
-                    <p className="text-slate-400 text-xs font-medium text-center mb-6 max-w-[280px] opacity-70">
+                    <h3 className="text-xl md:text-2xl font-black text-white mb-1 text-center tracking-tight uppercase">REGISTRO DE ACCESO</h3>
+                    <p className="text-slate-400 text-[10px] md:text-xs font-medium text-center mb-4 md:mb-6 max-w-[240px] md:max-w-[280px] opacity-70">
                         Escanea tu carnet o sube una foto de tu galería.
                     </p>
 
-                    <div className="flex flex-col gap-3 w-full max-w-[260px]">
+                    <div className="flex flex-col gap-2 md:gap-3 w-full max-w-[220px] md:max-w-[260px]">
                         <button
                             onClick={startScanner}
-                            className="group flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white px-6 py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-all"
+                            className="group flex items-center justify-center gap-2 md:gap-3 bg-blue-600 hover:bg-blue-500 text-white px-5 py-3 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg active:scale-95 transition-all"
                         >
-                            <Camera size={22} className="group-hover:rotate-12 transition-transform" />
-                            Usar Cámara
+                            <Camera size={20} className="group-hover:rotate-12 transition-transform" />
+                            <span>Usar Cámara</span>
                         </button>
 
                         <button
                             onClick={() => fileInputRef.current?.click()}
-                            className="group flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 text-white px-6 py-4 rounded-xl font-bold text-lg border border-white/10 backdrop-blur-md active:scale-95 transition-all"
+                            className="group flex items-center justify-center gap-2 md:gap-3 bg-white/5 hover:bg-white/10 text-white px-5 py-3 md:py-4 rounded-xl font-bold text-base md:text-lg border border-white/10 backdrop-blur-md active:scale-95 transition-all"
                         >
-                            <ImageIcon size={22} className="group-hover:scale-110 transition-transform text-blue-400" />
-                            Subir Foto
+                            <ImageIcon size={20} className="group-hover:scale-110 transition-transform text-blue-400" />
+                            <span>Subir Foto</span>
                         </button>
                     </div>
 
