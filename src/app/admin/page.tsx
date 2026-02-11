@@ -97,6 +97,39 @@ export default function AdminPage() {
         fetchUsers()
     }
 
+    const handleDeleteAttendance = async (userId: number, dateStr: string) => {
+        if (!confirm(`¿Desea eliminar la asistencia para este miembro el día ${dateStr}?`)) return
+
+        try {
+            const res = await fetch(`/api/attendance/delete?userId=${userId}&date=${dateStr}`, {
+                method: 'DELETE'
+            })
+            if (res.ok) {
+                refreshAuditLogs()
+            }
+        } catch (error) {
+            console.error('Error deleting attendance:', error)
+        }
+    }
+
+    const handleManualAttendance = async (qrCode: string, dateStr: string) => {
+        if (!confirm(`¿Desea registrar asistencia manual para el día ${dateStr}?`)) return
+
+        try {
+            // Re-usamos el endpoint de asistencia pero ajustado si fuera necesario, 
+            // aunque para simplicidad por ahora lo haremos para el día de hoy.
+            const res = await fetch('/api/attendance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ qrCode }),
+            })
+            if (res.ok) {
+                refreshAuditLogs()
+            }
+        } catch (error) {
+            console.error('Error logging attendance:', error)
+        }
+    }
     const handleEditUser = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!editingUser || !editName.trim()) return
@@ -803,9 +836,29 @@ export default function AdminPage() {
                                                         return (
                                                             <td key={idx} className="py-3 px-2 text-center">
                                                                 {isPresent ? (
-                                                                    <span className="font-black text-emerald-600 dark:text-emerald-400 text-xs">A</span>
+                                                                    <button
+                                                                        onClick={() => handleDeleteAttendance(user.id, dateObj.str)}
+                                                                        className="font-black text-emerald-600 dark:text-emerald-400 text-xs hover:bg-emerald-50 dark:hover:bg-emerald-900/30 p-1 rounded transition-colors"
+                                                                        title="Haga clic para eliminar esta asistencia"
+                                                                    >
+                                                                        A
+                                                                    </button>
                                                                 ) : isPast ? (
-                                                                    <span className="font-bold text-rose-500 dark:text-rose-400 text-xs">F</span>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            // Solo permitimos registrar asistencia manual si es HOY
+                                                                            const isToday = dateObj.str === format(new Date(), 'dd/MM/yyyy');
+                                                                            if (isToday) {
+                                                                                handleManualAttendance(user.qrCode, dateObj.str);
+                                                                            } else {
+                                                                                alert("Solo se puede registrar asistencia manual para el día de hoy.");
+                                                                            }
+                                                                        }}
+                                                                        className="font-bold text-rose-500 dark:text-rose-400 text-xs hover:bg-rose-50 dark:hover:bg-rose-900/30 p-1 rounded transition-colors"
+                                                                        title={dateObj.str === format(new Date(), 'dd/MM/yyyy') ? "Haga clic para registrar asistencia manual" : "Inasistencia"}
+                                                                    >
+                                                                        F
+                                                                    </button>
                                                                 ) : (
                                                                     <span className="text-slate-300 dark:text-slate-700 text-[10px]">-</span>
                                                                 )}

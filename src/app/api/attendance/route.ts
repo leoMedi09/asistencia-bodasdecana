@@ -19,19 +19,21 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
         }
 
-        // Check if already checked in today (optional, but good)
-        const startOfDay = new Date()
-        startOfDay.setHours(0, 0, 0, 0)
+        // Calcular el inicio y fin del día actual en Zona Horaria de Perú (UTC-5)
+        const now = new Date()
+        const peruNow = new Date(now.getTime() - (5 * 60 * 60 * 1000))
+        const peruDayStr = peruNow.toISOString().split('T')[0] // 'YYYY-MM-DD'
 
-        const endOfDay = new Date()
-        endOfDay.setHours(23, 59, 59, 999)
+        // El día en Perú (00:00 a 23:59) corresponde a (05:00 a 04:59 del día siguiente) en UTC
+        const startOfPeruDay = new Date(`${peruDayStr}T05:00:00Z`)
+        const endOfPeruDay = new Date(startOfPeruDay.getTime() + (24 * 60 * 60 * 1000) - 1)
 
         const existingAttendance = await prisma.attendance.findFirst({
             where: {
                 userId: user.id,
                 timestamp: {
-                    gte: startOfDay,
-                    lte: endOfDay
+                    gte: startOfPeruDay,
+                    lte: endOfPeruDay
                 }
             }
         })
