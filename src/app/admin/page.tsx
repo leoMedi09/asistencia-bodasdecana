@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
 import Link from 'next/link'
-import { ArrowLeft, UserPlus, Printer, Download, FileText, Loader2, Share2, Table, Trash2, Search, Pencil, LayoutGrid, List, X, Check, RefreshCw } from 'lucide-react'
+import { ArrowLeft, UserPlus, Printer, Download, FileText, Loader2, Share2, Table, Trash2, Search, Pencil, LayoutGrid, List, X, Check, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import * as XLSX from 'xlsx'
 import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 import autoTable from 'jspdf-autotable'
 
@@ -34,7 +35,14 @@ export default function AdminPage() {
     const [editName, setEditName] = useState('')
     const [editCommunityNumber, setEditCommunityNumber] = useState('')
     const [selectedCommunity, setSelectedCommunity] = useState<string>('all')
+
+    // Reset page when filtering
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchQuery, selectedCommunity])
     const [isMounted, setIsMounted] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
     const cardsContainerRef = useRef<HTMLDivElement>(null)
 
     const months = [
@@ -56,6 +64,8 @@ export default function AdminPage() {
     const [activeTab, setActiveTab] = useState<'members' | 'audit'>('members')
     const [auditLogs, setAuditLogs] = useState<any[]>([])
     const [auditSearch, setAuditSearch] = useState('')
+    const todayRef = useRef<HTMLTableHeaderCellElement>(null)
+    const auditScrollContainerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         setIsMounted(true)
@@ -83,6 +93,16 @@ export default function AdminPage() {
             if (interval) clearInterval(interval)
         }
     }, [activeTab])
+
+    useEffect(() => {
+        if (searchQuery.trim() !== '' && activeTab === 'members' && cardsContainerRef.current) {
+            const yOffset = -120; // Ajuste para que el buscador sticky no tape el primer resultado
+            const element = cardsContainerRef.current;
+            const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    }, [searchQuery, activeTab])
 
     const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -122,12 +142,10 @@ export default function AdminPage() {
         if (!confirm(`¿Desea registrar asistencia manual para el día ${dateStr}?`)) return
 
         try {
-            // Re-usamos el endpoint de asistencia pero ajustado si fuera necesario, 
-            // aunque para simplicidad por ahora lo haremos para el día de hoy.
             const res = await fetch('/api/attendance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ qrCode }),
+                body: JSON.stringify({ qrCode, date: dateStr }),
             })
             if (res.ok) {
                 refreshAuditLogs()
@@ -136,6 +154,31 @@ export default function AdminPage() {
             console.error('Error logging attendance:', error)
         }
     }
+    const handleMarkAllPresent = async (dateStr: string) => {
+        const filteredUsers = users.filter(u =>
+            u.fullName.toLowerCase().includes(auditSearch.toLowerCase()) ||
+            (u.communityNumber && u.communityNumber.includes(auditSearch))
+        );
+
+        if (!confirm(`¿Desea marcar asistencia a los ${filteredUsers.length} miembros para el día ${dateStr}?`)) return
+
+        setLoading(true)
+        try {
+            // Enviamos las peticiones en paralelo para mayor velocidad
+            await Promise.all(filteredUsers.map(user =>
+                fetch('/api/attendance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ qrCode: user.qrCode, date: dateStr }),
+                })
+            ));
+            refreshAuditLogs()
+        } catch (error) {
+            console.error('Error marking all present:', error)
+        }
+        setLoading(false)
+    }
+
     const handleEditUser = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!editingUser || !editName.trim()) return
@@ -636,49 +679,6 @@ export default function AdminPage() {
 
                 {activeTab === 'members' ? (
                     <>
-                        {/* Buscador y Selector de Vista */}
-                        <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-10 print:hidden sticky top-4 z-40 px-1 md:px-0">
-                            <div className="relative flex-1 group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
-                                <input
-                                    type="text"
-                                    placeholder="Buscar miembro..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-11 pr-6 py-3.5 md:py-4 bg-white dark:bg-slate-900 rounded-[1.2rem] md:rounded-[1.5rem] border-2 border-slate-100 dark:border-slate-800 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 shadow-xl shadow-slate-200/5 transition-all font-bold text-base md:text-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                                />
-                            </div>
-                            <div className="flex gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pb-1 md:pb-0">
-                                <div className="flex bg-white dark:bg-slate-900 rounded-[1.2rem] md:rounded-[1.5rem] p-1 shadow-xl border-2 border-slate-100 dark:border-slate-800 flex-1 md:flex-none">
-                                    <select
-                                        value={selectedCommunity}
-                                        onChange={(e) => setSelectedCommunity(e.target.value)}
-                                        className="bg-transparent px-4 md:px-6 py-2 outline-none font-black text-[11px] md:text-sm text-slate-700 dark:text-slate-200 cursor-pointer min-w-[120px] md:min-w-0"
-                                    >
-                                        <option value="all">Todas</option>
-                                        {[...new Set(users.map(u => u.communityNumber).filter(Boolean))].sort().map(num => (
-                                            <option key={num} value={num} className="bg-slate-900 text-white">Com. {num}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="flex bg-white dark:bg-slate-900 rounded-[1.2rem] md:rounded-[1.5rem] p-1 shadow-xl border-2 border-slate-100 dark:border-slate-800">
-                                    <button
-                                        onClick={() => setViewMode('grid')}
-                                        className={`flex items-center gap-2 px-4 md:px-6 py-2 rounded-xl md:rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                                    >
-                                        <LayoutGrid size={18} />
-                                        <span className="hidden md:inline font-black text-sm">Cards</span>
-                                    </button>
-                                    <button
-                                        onClick={() => setViewMode('list')}
-                                        className={`flex items-center gap-2 px-4 md:px-6 py-2 rounded-xl md:rounded-2xl transition-all ${viewMode === 'list' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                                    >
-                                        <List size={18} />
-                                        <span className="hidden md:inline font-black text-sm">Lista</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
 
                         {/* Formulario de Agregar - Oculto al imprimir */}
                         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border-2 border-slate-100 dark:border-slate-800 shadow-2xl relative overflow-hidden group mb-10 print:hidden">
@@ -728,82 +728,159 @@ export default function AdminPage() {
                                 </form>
                             </div>
                         </div>
+
+                        {/* Buscador y Selector de Vista - Ahora debajo del registro */}
+                        <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-10 print:hidden sticky top-4 z-40 px-1 md:px-0">
+                            <div className="relative flex-1 group">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar miembro..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-11 pr-6 py-3.5 md:py-4 bg-white dark:bg-slate-900 rounded-[1.2rem] md:rounded-[1.5rem] border-2 border-slate-100 dark:border-slate-800 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 shadow-xl shadow-slate-200/5 transition-all font-bold text-base md:text-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                                />
+                            </div>
+                            <div className="flex gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pb-1 md:pb-0">
+                                <div className="flex bg-white dark:bg-slate-900 rounded-[1.2rem] md:rounded-[1.5rem] p-1 shadow-xl border-2 border-slate-100 dark:border-slate-800 flex-1 md:flex-none">
+                                    <select
+                                        value={selectedCommunity}
+                                        onChange={(e) => setSelectedCommunity(e.target.value)}
+                                        className="bg-transparent px-4 md:px-6 py-2 outline-none font-black text-[11px] md:text-sm text-slate-700 dark:text-slate-200 cursor-pointer min-w-[120px] md:min-w-0"
+                                    >
+                                        <option value="all">Todas</option>
+                                        {[...new Set(users.map(u => u.communityNumber).filter(Boolean))].sort().map(num => (
+                                            <option key={num} value={num} className="bg-slate-900 text-white">Com. {num}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex bg-white dark:bg-slate-900 rounded-[1.2rem] md:rounded-[1.5rem] p-1 shadow-xl border-2 border-slate-100 dark:border-slate-800">
+                                    <button
+                                        onClick={() => setViewMode('grid')}
+                                        className={`flex items-center gap-2 px-4 md:px-6 py-2 rounded-xl md:rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                    >
+                                        <LayoutGrid size={18} />
+                                        <span className="hidden md:inline font-black text-sm">Cards</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={`flex items-center gap-2 px-4 md:px-6 py-2 rounded-xl md:rounded-2xl transition-all ${viewMode === 'list' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                    >
+                                        <List size={18} />
+                                        <span className="hidden md:inline font-black text-sm">Lista</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </>
                 ) : (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border-2 border-slate-100 dark:border-slate-800 shadow-2xl mb-10">
-                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-                                <div>
-                                    <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Auditoría de Asistencias</h2>
-                                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Registro histórico completo de todos lo escaneos realizados.</p>
+                            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8 bg-slate-50/50 dark:bg-slate-800/30 p-4 md:p-6 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800">
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Periodo:</label>
+                                        <div className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all hover:border-blue-400">
+                                            <select
+                                                value={selectedMonth}
+                                                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                                className="w-full bg-transparent text-slate-900 dark:text-white font-black text-sm py-3 pl-4 pr-10 outline-none cursor-pointer appearance-none"
+                                            >
+                                                {months.map((month, index) => (
+                                                    <option key={month} value={index} className="bg-white dark:bg-slate-900">{month} 2026</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-blue-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
 
-                                    {/* Selector de Mes Compacto para Auditoría */}
-                                    <div className="flex items-center gap-3 mb-8 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 w-fit">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">MES:</span>
-                                        <select
-                                            value={selectedMonth}
-                                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                            className="bg-transparent text-slate-900 dark:text-white font-black text-sm outline-none cursor-pointer pr-8 border-none appearance-none"
-                                            style={{
-                                                backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236366f1\' stroke-width=\'4\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\' /%3E%3C/svg%3E")',
-                                                backgroundRepeat: 'no-repeat',
-                                                backgroundPosition: 'right center',
-                                                backgroundSize: '12px'
-                                            }}
-                                        >
-                                            {months.map((month, index) => (
-                                                <option key={month} value={index} className="bg-white dark:bg-slate-900">{month}</option>
-                                            ))}
-                                        </select>
+                                    <div className="flex flex-col gap-1.5 flex-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Buscar Miembro:</label>
+                                        <div className="relative group">
+                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre o comunidad..."
+                                                value={auditSearch}
+                                                onChange={(e) => setAuditSearch(e.target.value)}
+                                                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 outline-none text-sm font-bold text-slate-900 dark:text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                                    <div className="relative w-full md:w-64">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                        <input
-                                            type="text"
-                                            placeholder="Filtrar por nombre..."
-                                            value={auditSearch}
-                                            onChange={(e) => setAuditSearch(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl border-none outline-none text-sm font-bold text-slate-700 dark:text-slate-200"
-                                        />
-                                    </div>
+
+                                <div className="flex items-end pt-1 md:pt-4">
                                     <button
                                         onClick={refreshAuditLogs}
-                                        className="p-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                                        title="Actualizar tabla"
+                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all font-bold text-sm shadow-sm active:scale-95"
                                     >
-                                        <RefreshCw size={20} />
+                                        <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                                        <span>Actualizar</span>
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="overflow-x-auto pb-4">
-                                <table className="w-full text-left border-collapse min-w-[800px]">
+                            <div
+                                ref={auditScrollContainerRef}
+                                className={`relative overflow-x-auto rounded-3xl border border-slate-200 dark:border-slate-800 custom-scrollbar shadow-inner bg-slate-50/20 dark:bg-black/10 transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}
+                            >
+                                <table className="w-full text-left border-separate border-spacing-0 min-w-[900px]">
                                     <thead>
-                                        <tr className="border-b border-slate-200 dark:border-slate-800">
-                                            <th className="py-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-10 w-[200px]">Miembro</th>
-                                            <th className="py-4 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-[80px]">Com.</th>
+                                        <tr>
+                                            <th className="py-5 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-30 border-b-2 border-slate-100 dark:border-slate-800 rounded-tl-3xl shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)]">
+                                                <div className="flex items-center gap-2">
+                                                    Miembro
+                                                </div>
+                                            </th>
+                                            <th className="py-5 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center border-b-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+                                                Com.
+                                            </th>
                                             {(() => {
                                                 const year = 2026;
                                                 const daysInMonth = new Date(year, selectedMonth + 1, 0).getDate();
                                                 const dates = [];
+                                                const todayStr = format(new Date(), 'dd/MM/yyyy');
                                                 for (let d = 1; d <= daysInMonth; d++) {
                                                     const date = new Date(year, selectedMonth, d);
                                                     if (date.getDay() === 2 || date.getDay() === 6) {
                                                         dates.push({ str: format(date, 'dd/MM/yyyy'), date });
                                                     }
                                                 }
-                                                return dates.map((date, i) => (
-                                                    <th key={i} className="py-4 px-2 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center min-w-[60px]">
-                                                        {format(date.date, 'dd/MM')}
-                                                    </th>
-                                                ));
+                                                return dates.map((date, i) => {
+                                                    const isToday = date.str === todayStr;
+                                                    return (
+                                                        <th
+                                                            key={i}
+                                                            ref={isToday ? todayRef : null}
+                                                            className={`relative group py-5 px-3 text-[10px] font-black uppercase tracking-widest text-center border-b-2 transition-colors min-w-[70px] ${isToday
+                                                                ? 'text-blue-600 dark:text-blue-400 border-blue-500 bg-blue-50/30 dark:bg-blue-900/10'
+                                                                : 'text-slate-400 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50'
+                                                                }`}
+                                                        >
+                                                            <div className="flex flex-col gap-0.5 items-center">
+                                                                <span className={isToday ? "scale-110 origin-center" : ""}>{format(date.date, 'dd')}</span>
+                                                                <span className="text-[8px] opacity-60 font-bold">{format(date.date, 'MMM', { locale: es })}</span>
+
+                                                                <button
+                                                                    onClick={() => handleMarkAllPresent(date.str)}
+                                                                    className="mt-2 p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100 dark:border-emerald-800/50"
+                                                                    title="Marcar asistencia a todos en este día"
+                                                                >
+                                                                    <Check size={12} strokeWidth={4} />
+                                                                </button>
+                                                            </div>
+                                                        </th>
+                                                    );
+                                                });
                                             })()}
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {users.filter(u =>
+                                        {[...users].sort((a, b) => a.fullName.localeCompare(b.fullName)).filter(u =>
                                             u.fullName.toLowerCase().includes(auditSearch.toLowerCase()) ||
                                             (u.communityNumber && u.communityNumber.includes(auditSearch))
                                         ).map((user) => {
@@ -817,14 +894,17 @@ export default function AdminPage() {
                                                 }
                                             }
 
+                                            const todayStr = format(new Date(), 'dd/MM/yyyy');
                                             return (
-                                                <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                                                    <td className="py-3 px-4 text-slate-900 dark:text-white font-bold text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/50 transition-colors border-r border-slate-100 dark:border-slate-800 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                                                        {user.fullName}
+                                                <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                                                    <td className="py-4 px-6 text-slate-900 dark:text-white font-black text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 transition-colors border-r border-slate-100 dark:border-slate-800 z-20 shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)]">
+                                                        <div className="truncate max-w-[150px] md:max-w-[200px]" title={user.fullName}>
+                                                            {user.fullName}
+                                                        </div>
                                                     </td>
-                                                    <td className="py-3 px-4 text-center">
+                                                    <td className="py-4 px-4 text-center border-r border-slate-100/50 dark:border-slate-800/50">
                                                         {user.communityNumber && (
-                                                            <span className="inline-block px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-black">
+                                                            <span className="inline-block px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black">
                                                                 {user.communityNumber}
                                                             </span>
                                                         )}
@@ -835,38 +915,34 @@ export default function AdminPage() {
                                                             log.Fecha === dateObj.str
                                                         );
 
+                                                        const todayStr = format(new Date(), 'dd/MM/yyyy');
+                                                        const isToday = dateObj.str === todayStr;
                                                         const today = new Date();
                                                         today.setHours(0, 0, 0, 0);
                                                         const isPast = dateObj.date <= today;
 
                                                         return (
-                                                            <td key={idx} className="py-3 px-2 text-center">
+                                                            <td key={idx} className={`py-4 px-2 text-center border-r border-slate-100/50 dark:border-slate-800/50 transition-colors ${isToday ? 'bg-blue-50/20 dark:bg-blue-900/5' : ''}`}>
                                                                 {isPresent ? (
                                                                     <button
                                                                         onClick={() => handleDeleteAttendance(user.id, dateObj.str)}
-                                                                        className="font-black text-emerald-600 dark:text-emerald-400 text-xs hover:bg-emerald-50 dark:hover:bg-emerald-900/30 p-1 rounded transition-colors"
-                                                                        title="Haga clic para eliminar esta asistencia"
+                                                                        className="w-8 h-8 flex items-center justify-center font-black text-[10px] bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-xl shadow-sm hover:scale-110 hover:shadow-md transition-all active:scale-95 mx-auto"
+                                                                        title="Asistió - Haga clic para eliminar"
                                                                     >
                                                                         A
                                                                     </button>
                                                                 ) : isPast ? (
                                                                     <button
                                                                         onClick={() => {
-                                                                            // Solo permitimos registrar asistencia manual si es HOY
-                                                                            const isToday = dateObj.str === format(new Date(), 'dd/MM/yyyy');
-                                                                            if (isToday) {
-                                                                                handleManualAttendance(user.qrCode, dateObj.str);
-                                                                            } else {
-                                                                                alert("Solo se puede registrar asistencia manual para el día de hoy.");
-                                                                            }
+                                                                            handleManualAttendance(user.qrCode, dateObj.str);
                                                                         }}
-                                                                        className="font-bold text-rose-500 dark:text-rose-400 text-xs hover:bg-rose-50 dark:hover:bg-rose-900/30 p-1 rounded transition-colors"
-                                                                        title={dateObj.str === format(new Date(), 'dd/MM/yyyy') ? "Haga clic para registrar asistencia manual" : "Inasistencia"}
+                                                                        className="w-8 h-8 flex items-center justify-center font-black text-[10px] rounded-xl transition-all mx-auto bg-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white dark:bg-rose-900/30 dark:text-rose-400 cursor-pointer hover:scale-110 active:scale-95 shadow-sm"
+                                                                        title={isToday ? "Falta - Marcar hoy aquí o al lado del nombre" : "Falta - Haga clic para regularizar asistencia"}
                                                                     >
                                                                         F
                                                                     </button>
                                                                 ) : (
-                                                                    <span className="text-slate-300 dark:text-slate-700 text-[10px]">-</span>
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 mx-auto opacity-50" />
                                                                 )}
                                                             </td>
                                                         );
@@ -894,11 +970,11 @@ export default function AdminPage() {
                 {
                     activeTab === 'members' && (
                         <div ref={cardsContainerRef} className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 print:grid-cols-2 print:gap-4" : "flex flex-col gap-4"}>
-                            {Array.isArray(users) && users.filter(u => {
+                            {Array.isArray(users) && [...users].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).filter(u => {
                                 const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
                                 const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
                                 return matchesName && matchesCommunity;
-                            }).map((user) => (
+                            }).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((user) => (
                                 <div key={user.id} className={viewMode === 'grid' ? "flex flex-col gap-3" : "flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 hover:border-blue-300 transition-all gap-4"}>
                                     {/* Hidden Card for capture (Always present in DOM but hidden from view if in list mode) */}
                                     <div className={viewMode === 'grid' ? "" : "absolute -left-[9999px] top-0 opacity-0 pointer-events-none"}>
@@ -931,10 +1007,11 @@ export default function AdminPage() {
                                         <>
                                             {/* Acciones (Grid) */}
                                             <div className="flex flex-col gap-2 print:hidden w-full">
+
                                                 <button
                                                     onClick={() => handleShareCard(user)}
                                                     disabled={downloadingId !== null}
-                                                    className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-emerald-900/10 active:scale-95 transition-all disabled:opacity-50"
+                                                    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/10 active:scale-95 transition-all disabled:opacity-50"
                                                 >
                                                     {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
                                                     Enviar por WhatsApp
@@ -1026,6 +1103,89 @@ export default function AdminPage() {
                                     )}
                                 </div>
                             ))}
+                            {/* Paginación */}
+                            {Array.isArray(users) && users.filter(u => {
+                                const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
+                                const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
+                                return matchesName && matchesCommunity;
+                            }).length > itemsPerPage && (
+                                    <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-12 pb-10">
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                                disabled={currentPage === 1}
+                                                className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-all shadow-sm"
+                                            >
+                                                <ChevronLeft size={20} />
+                                            </button>
+
+                                            <div className="flex items-center gap-1">
+                                                {Array.from({
+                                                    length: Math.ceil(users.filter(u => {
+                                                        const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
+                                                        const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
+                                                        return matchesName && matchesCommunity;
+                                                    }).length / itemsPerPage)
+                                                }, (_, i) => i + 1).map(page => {
+                                                    // Mostrar solo algunas páginas si hay demasiadas
+                                                    const totalPages = Math.ceil(users.filter(u => {
+                                                        const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
+                                                        const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
+                                                        return matchesName && matchesCommunity;
+                                                    }).length / itemsPerPage);
+
+                                                    if (
+                                                        page === 1 ||
+                                                        page === totalPages ||
+                                                        (page >= currentPage - 1 && page <= currentPage + 1)
+                                                    ) {
+                                                        return (
+                                                            <button
+                                                                key={page}
+                                                                onClick={() => setCurrentPage(page)}
+                                                                className={`w-11 h-11 rounded-2xl font-black text-sm transition-all border ${currentPage === page
+                                                                    ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30'
+                                                                    : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:bg-slate-50'
+                                                                    }`}
+                                                            >
+                                                                {page}
+                                                            </button>
+                                                        );
+                                                    } else if (
+                                                        (page === 2 && currentPage > 3) ||
+                                                        (page === totalPages - 1 && currentPage < totalPages - 2)
+                                                    ) {
+                                                        return <span key={page} className="px-1 text-slate-400">...</span>;
+                                                    }
+                                                    return null;
+                                                })}
+                                            </div>
+
+                                            <button
+                                                onClick={() => setCurrentPage(prev => Math.min(Math.ceil(users.filter(u => {
+                                                    const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
+                                                    const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
+                                                    return matchesName && matchesCommunity;
+                                                }).length / itemsPerPage), prev + 1))}
+                                                disabled={currentPage === Math.ceil(users.filter(u => {
+                                                    const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
+                                                    const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
+                                                    return matchesName && matchesCommunity;
+                                                }).length / itemsPerPage)}
+                                                className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-500 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-all shadow-sm"
+                                            >
+                                                <ChevronRight size={20} />
+                                            </button>
+                                        </div>
+                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                                            Página {currentPage} de {Math.ceil(users.filter(u => {
+                                                const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
+                                                const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
+                                                return matchesName && matchesCommunity;
+                                            }).length / itemsPerPage)}
+                                        </span>
+                                    </div>
+                                )}
                         </div>
                     )}
 
