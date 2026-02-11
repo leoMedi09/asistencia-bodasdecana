@@ -589,14 +589,14 @@ export default function AdminPage() {
     if (!isMounted) return null;
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 animate-fade-in">
-            <div className="max-w-6xl mx-auto">
-                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 print:hidden">
-                    <div className="flex flex-col gap-4">
-                        <Link href="/" className="p-3 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl text-slate-500 hover:text-blue-600 transition-all active:scale-95 group w-fit -ml-1">
-                            <ArrowLeft className="group-hover:-translate-x-1 transition-transform" size={20} strokeWidth={2.5} />
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-3 md:p-6 lg:p-8 animate-fade-in">
+            <div className="max-w-[1400px] mx-auto">
+                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-10 print:hidden text-center md:text-left">
+                    <div className="flex flex-col gap-3">
+                        <Link href="/" className="p-2.5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl text-slate-500 hover:text-blue-600 transition-all active:scale-95 group w-fit -ml-1 mx-auto md:ml-0">
+                            <ArrowLeft className="group-hover:-translate-x-1 transition-transform" size={18} strokeWidth={2.5} />
                         </Link>
-                        <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
+                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tighter">
                             Panel <span className="text-blue-600">Admin</span>
                         </h1>
                     </div>
@@ -607,8 +607,8 @@ export default function AdminPage() {
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
                     <div className="z-10 flex-1 text-center lg:text-left">
-                        <h2 className="text-2xl md:text-3xl font-black mb-1.5 text-white tracking-tight">Reporte Mensual <span className="text-blue-200">2026</span></h2>
-                        <p className="text-blue-100/80 text-sm md:text-base font-medium max-w-lg">Exporta la asistencia detallada con formato oficial.</p>
+                        <h2 className="text-2xl md:text-3xl font-black mb-1 text-white tracking-tight">Reporte Mensual <span className="text-blue-200">2026</span></h2>
+                        <p className="text-blue-100/80 text-xs md:text-sm lg:text-base font-medium max-w-lg">Exporta la asistencia detallada con formato oficial.</p>
 
                         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
                             <label className="text-blue-100/60 text-[10px] font-black uppercase tracking-widest">Seleccionar Mes:</label>
@@ -627,7 +627,7 @@ export default function AdminPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="z-10 flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                    <div className="z-10 flex flex-col sm:flex-row gap-2.5 w-full lg:w-auto">
                         <button
                             onClick={exportToExcel}
                             disabled={isGeneratingExcel}
@@ -730,15 +730,15 @@ export default function AdminPage() {
                         </div>
 
                         {/* Buscador y Selector de Vista - Ahora debajo del registro */}
-                        <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-10 print:hidden sticky top-4 z-40 px-1 md:px-0">
+                        <div className="flex flex-col xl:flex-row gap-3 md:gap-4 mb-8 print:hidden sticky top-3 z-40 px-1 md:px-0">
                             <div className="relative flex-1 group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
                                 <input
                                     type="text"
                                     placeholder="Buscar miembro..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-11 pr-6 py-3.5 md:py-4 bg-white dark:bg-slate-900 rounded-[1.2rem] md:rounded-[1.5rem] border-2 border-slate-100 dark:border-slate-800 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 shadow-xl shadow-slate-200/5 transition-all font-bold text-base md:text-lg text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                                    className="w-full pl-11 pr-6 py-3 bg-white dark:bg-slate-900 rounded-[1.2rem] md:rounded-[1.5rem] border-2 border-slate-100 dark:border-slate-800 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 shadow-xl shadow-slate-200/5 transition-all font-bold text-sm md:text-base text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
                                 />
                             </div>
                             <div className="flex gap-2 w-full md:w-auto overflow-x-auto no-scrollbar pb-1 md:pb-0">
@@ -969,7 +969,7 @@ export default function AdminPage() {
                 {/* Lista de Miembros (Solo si está activo el tab 'members') */}
                 {
                     activeTab === 'members' && (
-                        <div ref={cardsContainerRef} className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 print:grid-cols-2 print:gap-4" : "flex flex-col gap-4"}>
+                        <div ref={cardsContainerRef} className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 print:grid-cols-2 print:gap-4" : "flex flex-col gap-4"}>
                             {Array.isArray(users) && [...users].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).filter(u => {
                                 const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
                                 const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
