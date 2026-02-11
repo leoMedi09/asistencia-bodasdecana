@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            alreadyRegistered: !!existingAttendance,
+            updated: !!existingAttendance,
             user: user.fullName,
             time: attendance.timestamp,
         })

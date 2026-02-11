@@ -25,19 +25,20 @@ export default function ScannerPage() {
                 const data = await res.json()
                 if (res.ok) {
                     setLastUser(data.user)
-                    if (data.alreadyRegistered) {
-                        setMessage(`¡Hola ${data.user}, ya registramos tu asistencia hoy!`)
+                    // Siempre éxito, indicamos si es actualización para info del admin
+                    if (data.updated) {
+                        setMessage(`Registro Actualizado: ${data.user}`)
                     } else {
                         setMessage(`¡Bienvenido/a, ${data.user}!`)
                     }
                     setStatus('success')
 
-                    // Auto reset after 2 seconds
+                    // Auto reset after 2.5 seconds
                     setTimeout(() => {
                         setStatus('idle')
                         setMessage('Escanee su código QR')
                         isProcessing.current = false
-                    }, 2000)
+                    }, 2500)
                 } else {
                     setMessage(`Error: ${data.error || 'Código no reconocido'}`)
                     setStatus('error')
@@ -60,7 +61,7 @@ export default function ScannerPage() {
 
     return (
         <div className={`min-h-screen flex flex-col items-center justify-center p-4 transition-all duration-700 ${status === 'success'
-            ? (message.includes('ya registramos') ? 'bg-amber-500 text-slate-950' : 'bg-emerald-500 text-white')
+            ? 'bg-emerald-500 text-white'
             : status === 'error' ? 'bg-rose-500 text-white' : 'bg-slate-950 text-white'
             }`}>
             {/* Botón Volver - Centrado con el contenedor */}
@@ -73,17 +74,17 @@ export default function ScannerPage() {
             <div className="w-full max-w-xl flex flex-col items-center flex-1 justify-center py-4 md:py-8 px-4">
                 {/* Encabezado Responsivo Centrado */}
                 <div className="text-center mb-6 md:mb-10 animate-in fade-in slide-in-from-top-4 duration-700 w-full">
-                    <div className={`inline-block px-3 py-1 rounded-full mb-3 md:mb-4 border ${status === 'success' && message.includes('ya registramos')
-                        ? 'bg-black/10 border-black/20'
+                    <div className={`inline-block px-3 py-1 rounded-full mb-3 md:mb-4 border ${status === 'success'
+                        ? 'bg-white/10 border-white/20'
                         : 'bg-blue-500/10 border-blue-500/20'}`}>
-                        <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] ${status === 'success' && message.includes('ya registramos') ? 'text-black' : 'text-blue-400'}`}>
+                        <span className={`text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] ${status === 'success' ? 'text-white' : 'text-blue-400'}`}>
                             Control de Acceso v2.0
                         </span>
                     </div>
-                    <h1 className={`text-3xl md:text-6xl font-black mb-2 md:mb-3 tracking-tighter drop-shadow-2xl ${status === 'success' && message.includes('ya registramos') ? 'text-black' : 'text-white'}`}>
+                    <h1 className="text-3xl md:text-6xl font-black mb-2 md:mb-3 tracking-tighter drop-shadow-2xl text-white">
                         ESCÁNER DE ACCESO
                     </h1>
-                    <p className={`text-xs md:text-base font-medium tracking-wide ${status === 'success' && message.includes('ya registramos') ? 'text-black/80' : 'text-slate-400 opacity-80'}`}>
+                    <p className="text-xs md:text-base font-medium tracking-wide text-slate-400 opacity-80">
                         Muestra tu tarjeta frente a la cámara del dispositivo
                     </p>
                 </div>
@@ -102,12 +103,9 @@ export default function ScannerPage() {
                         </div>
                     )}
 
-                    {/* Feedback Visual: Éxito/Alerta */}
+                    {/* Feedback Visual: Éxito */}
                     {status === 'success' && (
-                        <div className={`absolute inset-0 z-[100] flex flex-col items-center justify-between p-6 rounded-3xl animate-in fade-in zoom-in duration-300 overflow-hidden ${message.includes('ya registramos')
-                            ? 'bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600'
-                            : 'bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-600'
-                            }`}>
+                        <div className="absolute inset-0 z-[100] flex flex-col items-center justify-between p-6 rounded-3xl animate-in fade-in zoom-in duration-300 overflow-hidden bg-gradient-to-br from-emerald-500 via-teal-500 to-emerald-600 shadow-[0_0_50px_-12px_rgba(16,185,129,0.5)]">
 
                             {/* Círculos decorativos de fondo */}
                             <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
@@ -116,39 +114,25 @@ export default function ScannerPage() {
                             {/* Icono Principal Compacto */}
                             <div className="relative z-10 mt-1">
                                 <div className="bg-white rounded-full p-3 shadow-xl animate-in zoom-in-50 duration-500">
-                                    <CheckCircle2 className={`w-12 h-12 md:w-14 md:h-14 ${message.includes('ya registramos') ? 'text-amber-500' : 'text-emerald-500'
-                                        }`} strokeWidth={3} />
+                                    <CheckCircle2 className="w-12 h-12 md:w-14 md:h-14 text-emerald-500" strokeWidth={3} />
                                 </div>
                             </div>
 
                             <div className="w-full px-2 text-center relative z-10 flex flex-col items-center flex-1 justify-center py-2">
-                                <div className={`inline-block backdrop-blur-md text-[8px] md:text-xs font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] mb-2 border ${message.includes('ya registramos')
-                                    ? 'bg-black/10 text-black border-black/20'
-                                    : 'bg-white/20 text-white border-white/30'
-                                    }`}>
-                                    {message.includes('ya registramos') ? '⚠️ ALERTA DE REGISTRO' : '✅ ASISTENCIA CONFIRMADA'}
+                                <div className="inline-block backdrop-blur-md text-[8px] md:text-xs font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] mb-2 border bg-white/20 text-white border-white/30">
+                                    ✅ ASISTENCIA CONFIRMADA
                                 </div>
 
-                                <h2 className={`text-2xl md:text-4xl font-black leading-none drop-shadow-2xl uppercase tracking-tighter ${message.includes('ya registramos') ? 'text-black' : 'text-white'
-                                    }`}>
-                                    {message.includes('ya registramos') ? (
-                                        <div className="flex flex-col items-center gap-0.5">
-                                            <span className="text-lg md:text-xl font-bold">YA FUE</span>
-                                            <span className="leading-none">REGISTRADO</span>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center gap-0.5">
-                                            <span className="text-lg md:text-xl opacity-80">¡MUCHAS</span>
-                                            <span className="text-emerald-50/90 leading-none">GRACIAS!</span>
-                                        </div>
-                                    )}
+                                <h2 className="text-2xl md:text-4xl font-black leading-none drop-shadow-2xl uppercase tracking-tighter text-white">
+                                    <div className="flex flex-col items-center gap-0.5">
+                                        <span className="text-lg md:text-xl opacity-80">¡MUCHAS</span>
+                                        <span className="text-emerald-50/90 leading-none">GRACIAS!</span>
+                                    </div>
                                 </h2>
 
-                                <div className={`h-1 w-10 mx-auto my-2 rounded-full ${message.includes('ya registramos') ? 'bg-black/20' : 'bg-white/40'
-                                    }`} />
+                                <div className="h-1 w-10 mx-auto my-2 rounded-full bg-white/40" />
 
-                                <p className={`font-black text-lg md:text-2xl tracking-tight drop-shadow-lg leading-tight w-full line-clamp-2 px-4 ${message.includes('ya registramos') ? 'text-black' : 'text-white'
-                                    }`}>
+                                <p className="font-black text-lg md:text-2xl tracking-tight drop-shadow-lg leading-tight w-full line-clamp-2 px-4 text-white">
                                     {lastUser}
                                 </p>
                             </div>
@@ -161,15 +145,12 @@ export default function ScannerPage() {
                                         setMessage('Escanee su código QR')
                                         isProcessing.current = false
                                     }}
-                                    className={`w-full py-3 rounded-2xl font-black text-xs shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 ${message.includes('ya registramos')
-                                        ? 'bg-black text-amber-500 border border-amber-500/20'
-                                        : 'bg-white text-emerald-600 hover:bg-emerald-50'
-                                        }`}
+                                    className="w-full py-3 rounded-2xl font-black text-xs shadow-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 bg-white text-emerald-600 hover:bg-emerald-50"
                                 >
                                     <RefreshCw size={16} strokeWidth={3} />
                                     <span>ESCANEAR SIGUIENTE</span>
                                 </button>
-                                <div className={`flex justify-center items-center gap-2 mt-2 opacity-60 font-bold uppercase tracking-widest text-[8px] ${message.includes('ya registramos') ? 'text-black' : 'text-white'}`}>
+                                <div className="flex justify-center items-center gap-2 mt-2 opacity-60 font-bold uppercase tracking-widest text-[8px] text-white">
                                     <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     <span className="w-1 h-1 bg-current rounded-full" />
                                     <span>T-01</span>

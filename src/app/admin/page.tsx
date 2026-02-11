@@ -73,8 +73,14 @@ export default function AdminPage() {
     }
 
     useEffect(() => {
+        let interval: NodeJS.Timeout;
         if (activeTab === 'audit') {
             refreshAuditLogs()
+            // Auto-refresh cada 5 segundos para ver registros en tiempo real
+            interval = setInterval(refreshAuditLogs, 5000)
+        }
+        return () => {
+            if (interval) clearInterval(interval)
         }
     }, [activeTab])
 
