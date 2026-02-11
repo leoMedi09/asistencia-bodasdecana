@@ -38,12 +38,10 @@ export async function POST(request: Request) {
             }
         })
 
+        // Si ya existe, lo borramos para que el nuevo registro sea el que valga (reemplazo)
         if (existingAttendance) {
-            return NextResponse.json({
-                success: true,
-                alreadyRegistered: true,
-                user: user.fullName,
-                time: existingAttendance.timestamp,
+            await prisma.attendance.delete({
+                where: { id: existingAttendance.id }
             })
         }
 
