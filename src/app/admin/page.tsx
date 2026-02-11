@@ -831,7 +831,7 @@ export default function AdminPage() {
                                 <table className="w-full text-left border-separate border-spacing-0 min-w-[900px]">
                                     <thead>
                                         <tr>
-                                            <th className="py-5 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-30 border-b-2 border-slate-100 dark:border-slate-800 rounded-tl-3xl shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)]">
+                                            <th className="py-5 px-3 md:px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-30 border-b-2 border-slate-100 dark:border-slate-800 rounded-tl-3xl shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)]">
                                                 <div className="flex items-center gap-2">
                                                     Miembro
                                                 </div>
@@ -897,8 +897,8 @@ export default function AdminPage() {
                                             const todayStr = format(new Date(), 'dd/MM/yyyy');
                                             return (
                                                 <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                                                    <td className="py-4 px-6 text-slate-900 dark:text-white font-black text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 transition-colors border-r border-slate-100 dark:border-slate-800 z-20 shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)]">
-                                                        <div className="truncate max-w-[150px] md:max-w-[200px]" title={user.fullName}>
+                                                    <td className="py-4 px-3 md:px-6 text-slate-900 dark:text-white font-black text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 transition-colors border-r border-slate-100 dark:border-slate-800 z-20 shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)]">
+                                                        <div className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-[200px]" title={user.fullName}>
                                                             {user.fullName}
                                                         </div>
                                                     </td>
@@ -948,6 +948,7 @@ export default function AdminPage() {
                                                         );
                                                     })}
                                                 </tr>
+
                                             );
                                         })}
                                         {users.length === 0 && (
