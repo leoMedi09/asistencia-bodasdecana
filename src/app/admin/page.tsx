@@ -229,8 +229,11 @@ export default function AdminPage() {
         setEditCommunityNumber(user.communityNumber || '')
         setEditGender(user.gender || 'M')
 
-        // Cargar datos de pareja si existe
-        const partner = user.partnerId ? users.find(u => u.id === user.partnerId) : null
+        // Cargar datos de pareja si existe (buscar por partnerId o si alguien nos tiene como partner)
+        const partner = user.partnerId
+            ? users.find(u => u.id === user.partnerId)
+            : users.find(u => u.partnerId === user.id)
+
         if (partner) {
             setEditPartnerId(partner.id)
             setEditPartnerName(partner.fullName)
@@ -1325,13 +1328,11 @@ export default function AdminPage() {
                                                         onEdit={openEditModal}
                                                         onDownload={handleDownloadImage}
                                                         onDelete={handleDeleteUser}
+                                                        hideEditDelete={!!displayPartner}
                                                     />
                                                 </div>
                                                 {displayPartner && (
                                                     <div className="flex flex-col gap-4 flex-1 min-w-0 relative">
-                                                        {viewMode === 'list' && (
-                                                            <div className="hidden md:block absolute -left-4 top-1/2 -translate-y-1/2 w-px h-12 bg-blue-200 dark:bg-blue-800" />
-                                                        )}
                                                         <MemberCard user={displayPartner} viewMode={viewMode} isPartner />
                                                         <MemberActions
                                                             user={displayPartner}
@@ -1341,6 +1342,21 @@ export default function AdminPage() {
                                                             onEdit={openEditModal}
                                                             onDownload={handleDownloadImage}
                                                             onDelete={handleDeleteUser}
+                                                            hideEditDelete={true}
+                                                        />
+                                                    </div>
+                                                )}
+                                                {displayPartner && (
+                                                    <div className={viewMode === 'list' ? "ml-auto pl-4 border-l border-slate-100 dark:border-slate-800" : "col-span-1 md:col-span-2 flex justify-center mt-2"}>
+                                                        <MemberActions
+                                                            user={displayUser}
+                                                            viewMode={viewMode}
+                                                            downloadingId={null}
+                                                            onShare={() => { }}
+                                                            onEdit={openEditModal}
+                                                            onDownload={() => { }}
+                                                            onDelete={handleDeleteUser}
+                                                            onlyEditDelete={true}
                                                         />
                                                     </div>
                                                 )}
@@ -1467,17 +1483,18 @@ export default function AdminPage() {
                                 </div>
 
                                 {editPartnerId && (
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex items-center gap-2 pl-1">
-                                            <Heart size={12} className="text-pink-500" fill="currentColor" />
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Nombre de Pareja</label>
+                                    <div className="flex flex-col gap-2 p-4 bg-pink-50/50 dark:bg-pink-900/5 rounded-2xl border border-pink-100 dark:border-pink-900/20">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Heart size={14} className="text-pink-500" fill="currentColor" />
+                                            <label className="text-xs font-black text-pink-600 dark:text-pink-400 uppercase tracking-widest leading-none">Cónyuge / Pareja</label>
                                         </div>
                                         <input
                                             type="text"
                                             value={editPartnerName}
                                             onChange={(e) => setEditPartnerName(e.target.value)}
-                                            className="p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-pink-500/50 focus:ring-4 focus:ring-pink-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
+                                            className="p-4 rounded-xl border-2 border-white dark:border-slate-800 dark:bg-slate-950 focus:border-pink-500/50 focus:ring-4 focus:ring-pink-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
                                             required
+                                            placeholder="Nombre de la pareja"
                                         />
                                     </div>
                                 )}
@@ -1638,7 +1655,9 @@ function MemberActions({
     onShare,
     onEdit,
     onDownload,
-    onDelete
+    onDelete,
+    hideEditDelete = false,
+    onlyEditDelete = false
 }: {
     user: User,
     viewMode: 'grid' | 'list',
@@ -1646,55 +1665,72 @@ function MemberActions({
     onShare: (u: User) => void,
     onEdit: (u: User) => void,
     onDownload: (u: User) => void,
-    onDelete: (u: User) => void
+    onDelete: (u: User) => void,
+    hideEditDelete?: boolean,
+    onlyEditDelete?: boolean
 }) {
     return (
         <div className={viewMode === 'list' ? "flex items-center gap-1.5 print:hidden ml-auto" : "flex flex-col gap-2 w-full"}>
-            <button
-                onClick={() => onShare(user)}
-                disabled={downloadingId !== null}
-                className={viewMode === 'list'
-                    ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95 disabled:opacity-50"
-                    : "flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/10 active:scale-95 transition-all disabled:opacity-50 w-full"}
-                title="Compartir por WhatsApp"
-            >
-                {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
-                {viewMode === 'grid' && "Enviar QR"}
-            </button>
+            {!onlyEditDelete && (
+                <button
+                    onClick={() => onShare(user)}
+                    disabled={downloadingId !== null}
+                    className={viewMode === 'list'
+                        ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95 disabled:opacity-50"
+                        : "flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/10 active:scale-95 transition-all disabled:opacity-50 w-full"}
+                    title="Compartir por WhatsApp"
+                >
+                    {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
+                    {viewMode === 'grid' && "Enviar QR"}
+                </button>
+            )}
 
             <div className={viewMode === 'list' ? "flex items-center gap-1.5" : "grid grid-cols-3 gap-2 w-full"}>
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onEdit(user);
-                    }}
-                    className={viewMode === 'list'
-                        ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95 cursor-pointer"
-                        : "flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200 cursor-pointer"}
-                    title="Editar"
-                >
-                    <Pencil size={18} />
-                </button>
-                <button
-                    onClick={() => onDownload(user)}
-                    className={viewMode === 'list'
-                        ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95"
-                        : "flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200"}
-                    title="Descargar Foto"
-                >
-                    <Download size={18} />
-                </button>
-                <button
-                    onClick={() => onDelete(user)}
-                    className={viewMode === 'list'
-                        ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-all active:scale-95"
-                        : "flex items-center justify-center bg-rose-50 text-rose-600 py-3 rounded-xl hover:bg-rose-100"}
-                    title="Eliminar"
-                >
-                    <Trash2 size={18} />
-                </button>
+                {!onlyEditDelete && (
+                    <button
+                        onClick={() => onDownload(user)}
+                        disabled={downloadingId !== null}
+                        className={viewMode === 'list'
+                            ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95 disabled:opacity-50"
+                            : "flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200 active:scale-95 transition-all disabled:opacity-50"}
+                        title="Descargar Carnet"
+                    >
+                        {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+                    </button>
+                )}
+
+                {(!hideEditDelete || onlyEditDelete) && (
+                    <>
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onEdit(user);
+                            }}
+                            className={viewMode === 'list'
+                                ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95 cursor-pointer"
+                                : "flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200 cursor-pointer"}
+                            title="Editar"
+                        >
+                            <Pencil size={18} />
+                        </button>
+                        <button
+                            onClick={() => onDelete(user)}
+                            className={viewMode === 'list'
+                                ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-rose-500/70 rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-all active:scale-95"
+                                : "flex items-center justify-center bg-rose-50 dark:bg-rose-900/10 text-rose-500 py-3 rounded-xl hover:bg-rose-100 transition-all"}
+                            title="Eliminar"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    </>
+                )}
             </div>
         </div>
+    )
+                )
+}
+            </div >
+        </div >
     )
 }
