@@ -489,11 +489,10 @@ export default function AdminPage() {
 
         setActiveAction({ id: user.id, type: 'share' })
         try {
-            // Small delay for better stability on mobile
-            await new Promise(resolve => setTimeout(resolve, 50))
+            // No Artificial delay to prevent user-gesture expiration
             cardElement.style.transition = 'none'
             const canvas = await html2canvas(cardElement, {
-                scale: 2, // Reverted to 2 for better compatibility
+                scale: 2, // Reverted to 2 for confirmed compatibility
                 useCORS: true,
                 backgroundColor: '#ffffff',
                 logging: false,
@@ -526,7 +525,9 @@ export default function AdminPage() {
             if (navigator.share) {
                 try {
                     await navigator.share({
-                        files: [file]
+                        files: [file],
+                        title: 'Carnet de Asistencia',
+                        text: `Comparto el carnet de ${user.fullName}`,
                     })
                     // If shared or aborted, we stop here
                     return
