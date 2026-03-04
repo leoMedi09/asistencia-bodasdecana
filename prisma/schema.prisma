@@ -14,6 +14,12 @@ model User {
   communityNumber String?
   qrCode          String   @unique @default(uuid())
   isActive        Boolean  @default(true)
+  
+  // Relación para parejas (necesaria para el reporte)
+  partnerId       Int?     @unique
+  partner         User?    @relation("PartnerRelation", fields: [partnerId], references: [id])
+  reversePartner  User?    @relation("PartnerRelation")
+
   attendances Attendance[]
   createdAt DateTime @default(now())
 }

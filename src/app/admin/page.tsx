@@ -18,6 +18,8 @@ interface User {
     communityNumber?: string
     qrCode: string
     createdAt: string
+    partnerId?: number | null
+    partner?: User | null
 }
 
 export default function AdminPage() {
@@ -35,6 +37,8 @@ export default function AdminPage() {
     const [editName, setEditName] = useState('')
     const [editCommunityNumber, setEditCommunityNumber] = useState('')
     const [selectedCommunity, setSelectedCommunity] = useState<string>('all')
+    const [isCouple, setIsCouple] = useState(false)
+    const [partnerName, setPartnerName] = useState('')
 
     // Reset page when filtering
     useEffect(() => {
@@ -114,11 +118,15 @@ export default function AdminPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 fullName: newName,
-                communityNumber: newCommunityNumber
+                communityNumber: newCommunityNumber,
+                isCouple,
+                partnerName: isCouple ? partnerName : undefined
             }),
         })
         setNewName('')
         setNewCommunityNumber('')
+        setPartnerName('')
+        setIsCouple(false)
         setLoading(false)
         fetchUsers()
     }
@@ -237,6 +245,14 @@ export default function AdminPage() {
             const usersRes = await fetch('/api/users')
             const allUsers: User[] = await usersRes.json()
 
+            // Ordenar por N° de Comunidad (de forma natural/numérica)
+            allUsers.sort((a, b) => {
+                const numA = parseInt(a.communityNumber || '999')
+                const numB = parseInt(b.communityNumber || '999')
+                if (numA !== numB) return numA - numB
+                return a.fullName.localeCompare(b.fullName)
+            })
+
             const reportsRes = await fetch('/api/reports/attendance')
             const allAttendances = await reportsRes.json()
 
@@ -260,32 +276,57 @@ export default function AdminPage() {
             // Crear el encabezado de las columnas
             const tableColumn = ["ID", "NOMBRE Y APELLIDO", "N° COM", ...meetingDates.map(m => m.str)]
 
-            // Crear las filas de datos
-            const tableRows = allUsers.map(user => {
-                const row = [
-                    user.id.toString().padStart(4, '0'),
-                    user.fullName.toUpperCase(),
-                    user.communityNumber || '-'
-                ]
+            // Crear las filas de datos con agrupación de parejas y encabezados de comunidad
+            const processedIds = new Set<number>()
+            const tableRows: any[][] = []
+            let currentCommunity: string | null = null
 
-                const today = new Date()
-                today.setHours(0, 0, 0, 0)
+            allUsers.forEach(user => {
+                if (processedIds.has(user.id)) return
 
-                meetingDates.forEach(mDate => {
-                    const attended = allAttendances.some((att: any) =>
-                        att.ID === user.id.toString().padStart(4, '0') && att.Fecha === mDate.str
-                    )
+                // Encabezado de comunidad
+                if (user.communityNumber !== currentCommunity) {
+                    currentCommunity = user.communityNumber || '-'
+                    tableRows.push([]) // Fila vacía para separar
+                    tableRows.push(["", `--- COMUNIDAD ${currentCommunity} ---`, ""])
+                }
 
-                    if (attended) {
-                        row.push('A')
-                    } else if (mDate.dateObject <= today) {
-                        row.push('F')
-                    } else {
-                        row.push('') // Future date
-                    }
-                })
+                const partner = user.partnerId ? allUsers.find(u => u.id === user.partnerId) : null
 
-                return row
+                // Función para añadir una fila de usuario
+                const addUserRow = (u: User) => {
+                    const row = [
+                        u.id.toString().padStart(4, '0'),
+                        u.fullName.toUpperCase(),
+                        u.communityNumber || '-'
+                    ]
+
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+
+                    meetingDates.forEach(mDate => {
+                        const attended = allAttendances.some((att: any) =>
+                            att.ID === u.id.toString().padStart(4, '0') &&
+                            att.Fecha === mDate.str
+                        )
+
+                        if (attended) {
+                            row.push('A')
+                        } else if (mDate.dateObject <= today) {
+                            row.push('F')
+                        } else {
+                            row.push('') // Future date
+                        }
+                    })
+                    tableRows.push(row)
+                    processedIds.add(u.id)
+                }
+
+                // Añadir usuario (y su pareja si existe para que salgan seguidos)
+                addUserRow(user)
+                if (partner && !processedIds.has(partner.id)) {
+                    addUserRow(partner)
+                }
             })
 
             // Unir encabezados y filas
@@ -454,6 +495,14 @@ export default function AdminPage() {
             const usersRes = await fetch('/api/users')
             const allUsers: User[] = await usersRes.json()
 
+            // Ordenar por N° de Comunidad (de forma natural/numérica)
+            allUsers.sort((a, b) => {
+                const numA = parseInt(a.communityNumber || '999')
+                const numB = parseInt(b.communityNumber || '999')
+                if (numA !== numB) return numA - numB
+                return a.fullName.localeCompare(b.fullName)
+            })
+
             const reportsRes = await fetch('/api/reports/attendance')
             const allAttendances = await reportsRes.json()
 
@@ -502,31 +551,61 @@ export default function AdminPage() {
 
             const tableColumn = ["ID", "NOMBRE Y APELLIDO", "N° COM", ...meetingDates.map(m => m.str)]
 
-            const tableRows = allUsers.map(user => {
-                const row = [
-                    user.id.toString().padStart(4, '0'),
-                    user.fullName.toUpperCase(),
-                    user.communityNumber || '-'
-                ]
+            const processedIds = new Set<number>()
+            const tableRows: any[][] = []
+            let currentCommunity: string | null = null
 
-                const today = new Date()
-                today.setHours(0, 0, 0, 0)
+            allUsers.forEach(user => {
+                if (processedIds.has(user.id)) return
 
-                meetingDates.forEach(mDate => {
-                    const attended = allAttendances.some((att: any) =>
-                        att.ID === user.id.toString().padStart(4, '0') && att.Fecha === mDate.str
-                    )
+                // Encabezado de comunidad
+                if (user.communityNumber !== currentCommunity) {
+                    currentCommunity = user.communityNumber || '-'
+                    tableRows.push([
+                        {
+                            content: `--- COMUNIDAD ${currentCommunity} ---`,
+                            colSpan: tableColumn.length,
+                            styles: { halign: 'center', fillColor: [240, 240, 240], fontStyle: 'bold' }
+                        }
+                    ])
+                }
 
-                    if (attended) {
-                        row.push('A')
-                    } else if (mDate.dateObject <= today) {
-                        row.push('F')
-                    } else {
-                        row.push('') // Future date
-                    }
-                })
+                const partner = user.partnerId ? allUsers.find(u => u.id === user.partnerId) : null
 
-                return row
+                // Función para añadir una fila de usuario
+                const addUserRow = (u: User) => {
+                    const row = [
+                        u.id.toString().padStart(4, '0'),
+                        u.fullName.toUpperCase(),
+                        u.communityNumber || '-'
+                    ]
+
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+
+                    meetingDates.forEach(mDate => {
+                        const attended = allAttendances.some((att: any) =>
+                            att.ID === u.id.toString().padStart(4, '0') &&
+                            att.Fecha === mDate.str
+                        )
+
+                        if (attended) {
+                            row.push('A')
+                        } else if (mDate.dateObject <= today) {
+                            row.push('F')
+                        } else {
+                            row.push('') // Future date
+                        }
+                    })
+                    tableRows.push(row)
+                    processedIds.add(u.id)
+                }
+
+                // Añadir usuario y su pareja (para que salgan seguidos)
+                addUserRow(user)
+                if (partner && !processedIds.has(partner.id)) {
+                    addUserRow(partner)
+                }
             })
 
             autoTable(doc, {
@@ -693,8 +772,24 @@ export default function AdminPage() {
                                 </div>
 
                                 <form onSubmit={handleAddUser} className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                                    <div className="md:col-span-7 flex flex-col gap-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre Completo</label>
+                                    <div className="md:col-span-12 flex flex-col gap-3 mb-2">
+                                        <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                                            <div className={`w-12 h-6 rounded-full p-1 transition-colors ${isCouple ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                                                <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isCouple ? 'translate-x-6' : 'translate-x-0'}`} />
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={isCouple}
+                                                onChange={(e) => setIsCouple(e.target.checked)}
+                                                className="hidden"
+                                            />
+                                            <span className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase tracking-widest">Registrar como Pareja</span>
+                                            {isCouple && <div className="p-1 px-2 border-2 border-pink-100 dark:border-pink-900/30 bg-pink-50 dark:bg-pink-900/10 text-pink-500 dark:text-pink-400 text-[10px] rounded-lg font-black animate-pulse">MODO PAREJA</div>}
+                                        </label>
+                                    </div>
+
+                                    <div className={isCouple ? "md:col-span-5 flex flex-col gap-2" : "md:col-span-7 flex flex-col gap-2"}>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">{isCouple ? "Nombre Cónyuge 1" : "Nombre Completo"}</label>
                                         <input
                                             type="text"
                                             value={newName}
@@ -704,6 +799,21 @@ export default function AdminPage() {
                                             required
                                         />
                                     </div>
+
+                                    {isCouple && (
+                                        <div className="md:col-span-5 flex flex-col gap-2 animate-in slide-in-from-left-4 duration-300">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Nombre Cónyuge 2</label>
+                                            <input
+                                                type="text"
+                                                value={partnerName}
+                                                onChange={(e) => setPartnerName(e.target.value)}
+                                                placeholder="Ej. María Lozano"
+                                                className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-green-500/50 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
+                                                required
+                                            />
+                                        </div>
+                                    )}
+
                                     <div className="md:col-span-2 flex flex-col gap-2">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Comunidad</label>
                                         <input
@@ -715,14 +825,14 @@ export default function AdminPage() {
                                             required
                                         />
                                     </div>
-                                    <div className="md:col-span-3 flex items-end">
+                                    <div className={isCouple ? "md:col-span-12 flex items-end mt-2" : "md:col-span-3 flex items-end"}>
                                         <button
                                             type="submit"
                                             disabled={loading}
                                             className="w-full bg-green-600 hover:bg-green-500 text-white p-4 h-[60px] md:h-full max-h-[60px] rounded-2xl font-black text-sm shadow-xl shadow-green-900/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
                                         >
                                             {loading ? <Loader2 className="animate-spin" size={20} /> : <UserPlus size={20} />}
-                                            {loading ? 'GUARDANDO...' : 'REGISTRAR'}
+                                            {loading ? 'GUARDANDO...' : isCouple ? 'REGISTRAR PAREJA' : 'REGISTRAR'}
                                         </button>
                                     </div>
                                 </form>
@@ -880,77 +990,101 @@ export default function AdminPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {[...users].sort((a, b) => a.fullName.localeCompare(b.fullName)).filter(u =>
-                                            u.fullName.toLowerCase().includes(auditSearch.toLowerCase()) ||
-                                            (u.communityNumber && u.communityNumber.includes(auditSearch))
-                                        ).map((user) => {
-                                            const year = 2026;
-                                            const daysInMonth = new Date(year, selectedMonth + 1, 0).getDate();
-                                            const dates = [];
-                                            for (let d = 1; d <= daysInMonth; d++) {
-                                                const date = new Date(year, selectedMonth, d);
-                                                if (date.getDay() === 2 || date.getDay() === 6) {
-                                                    dates.push({ str: format(date, 'dd/MM/yyyy'), date });
-                                                }
-                                            }
-
-                                            const todayStr = format(new Date(), 'dd/MM/yyyy');
-                                            return (
-                                                <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                                                    <td className="py-4 px-3 md:px-6 text-slate-900 dark:text-white font-black text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 transition-colors border-r border-slate-100 dark:border-slate-800 z-20 shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)]">
-                                                        <div className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-[200px]" title={user.fullName}>
-                                                            {user.fullName}
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-4 px-4 text-center border-r border-slate-100/50 dark:border-slate-800/50">
-                                                        {user.communityNumber && (
-                                                            <span className="inline-block px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black">
-                                                                {user.communityNumber}
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                    {dates.map((dateObj, idx) => {
-                                                        const isPresent = auditLogs.some(log =>
-                                                            log.ID === user.id.toString().padStart(4, '0') &&
-                                                            log.Fecha === dateObj.str
-                                                        );
-
-                                                        const todayStr = format(new Date(), 'dd/MM/yyyy');
-                                                        const isToday = dateObj.str === todayStr;
-                                                        const today = new Date();
-                                                        today.setHours(0, 0, 0, 0);
-                                                        const isPast = dateObj.date <= today;
-
-                                                        return (
-                                                            <td key={idx} className={`py-4 px-2 text-center border-r border-slate-100/50 dark:border-slate-800/50 transition-colors ${isToday ? 'bg-blue-50/20 dark:bg-blue-900/5' : ''}`}>
-                                                                {isPresent ? (
-                                                                    <button
-                                                                        onClick={() => handleDeleteAttendance(user.id, dateObj.str)}
-                                                                        className="w-8 h-8 flex items-center justify-center font-black text-[10px] bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-xl shadow-sm hover:scale-110 hover:shadow-md transition-all active:scale-95 mx-auto"
-                                                                        title="Asistió - Haga clic para eliminar"
-                                                                    >
-                                                                        A
-                                                                    </button>
-                                                                ) : isPast ? (
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            handleManualAttendance(user.qrCode, dateObj.str);
-                                                                        }}
-                                                                        className="w-8 h-8 flex items-center justify-center font-black text-[10px] rounded-xl transition-all mx-auto bg-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white dark:bg-rose-900/30 dark:text-rose-400 cursor-pointer hover:scale-110 active:scale-95 shadow-sm"
-                                                                        title={isToday ? "Falta - Marcar hoy aquí o al lado del nombre" : "Falta - Haga clic para regularizar asistencia"}
-                                                                    >
-                                                                        F
-                                                                    </button>
-                                                                ) : (
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 mx-auto opacity-50" />
-                                                                )}
-                                                            </td>
-                                                        );
-                                                    })}
-                                                </tr>
-
+                                        {(() => {
+                                            const sortedUsers = [...users].sort((a, b) => {
+                                                const numA = parseInt(a.communityNumber || '999')
+                                                const numB = parseInt(b.communityNumber || '999')
+                                                if (numA !== numB) return numA - numB
+                                                return a.fullName.localeCompare(b.fullName)
+                                            }).filter(u =>
+                                                u.fullName.toLowerCase().includes(auditSearch.toLowerCase()) ||
+                                                (u.communityNumber && u.communityNumber.includes(auditSearch))
                                             );
-                                        })}
+
+                                            const processedIds = new Set<number>();
+                                            const finalRows: User[] = [];
+
+                                            sortedUsers.forEach(user => {
+                                                if (processedIds.has(user.id)) return;
+
+                                                const partner = user.partnerId ? sortedUsers.find(u => u.id === user.partnerId) : null;
+
+                                                finalRows.push(user);
+                                                processedIds.add(user.id);
+
+                                                if (partner && !processedIds.has(partner.id)) {
+                                                    finalRows.push(partner);
+                                                    processedIds.add(partner.id);
+                                                }
+                                            });
+
+                                            return finalRows.map((user) => {
+                                                const year = 2026;
+                                                const daysInMonth = new Date(year, selectedMonth + 1, 0).getDate();
+                                                const dates = [];
+                                                for (let d = 1; d <= daysInMonth; d++) {
+                                                    const date = new Date(year, selectedMonth, d);
+                                                    if (date.getDay() === 2 || date.getDay() === 6) {
+                                                        dates.push({ str: format(date, 'dd/MM/yyyy'), date });
+                                                    }
+                                                }
+
+                                                return (
+                                                    <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+                                                        <td className="py-4 px-3 md:px-6 text-slate-900 dark:text-white font-black text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 transition-colors border-r border-slate-100 dark:border-slate-800 z-20 shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)]">
+                                                            <div className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-[200px]" title={user.fullName}>
+                                                                {user.fullName}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-4 px-4 text-center border-r border-slate-100/50 dark:border-slate-800/50">
+                                                            {user.communityNumber && (
+                                                                <span className="inline-block px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black">
+                                                                    {user.communityNumber}
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        {dates.map((dateObj, idx) => {
+                                                            const isPresent = auditLogs.some(log =>
+                                                                log.ID === user.id.toString().padStart(4, '0') &&
+                                                                log.Fecha === dateObj.str
+                                                            );
+
+                                                            const todayStr = format(new Date(), 'dd/MM/yyyy');
+                                                            const isToday = dateObj.str === todayStr;
+                                                            const today = new Date();
+                                                            today.setHours(0, 0, 0, 0);
+                                                            const isPast = dateObj.date <= today;
+
+                                                            return (
+                                                                <td key={idx} className={`py-4 px-2 text-center border-r border-slate-100/50 dark:border-slate-800/50 transition-colors ${isToday ? 'bg-blue-50/20 dark:bg-blue-900/5' : ''}`}>
+                                                                    {isPresent ? (
+                                                                        <button
+                                                                            onClick={() => handleDeleteAttendance(user.id, dateObj.str)}
+                                                                            className="w-8 h-8 flex items-center justify-center font-black text-[10px] bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-xl shadow-sm hover:scale-110 hover:shadow-md transition-all active:scale-95 mx-auto"
+                                                                            title="Asistió - Haga clic para eliminar"
+                                                                        >
+                                                                            A
+                                                                        </button>
+                                                                    ) : isPast ? (
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                handleManualAttendance(user.qrCode, dateObj.str);
+                                                                            }}
+                                                                            className="w-8 h-8 flex items-center justify-center font-black text-[10px] rounded-xl transition-all mx-auto bg-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white dark:bg-rose-900/30 dark:text-rose-400 cursor-pointer hover:scale-110 active:scale-95 shadow-sm"
+                                                                            title={isToday ? "Falta - Marcar hoy aquí o al lado del nombre" : "Falta - Haga clic para regularizar asistencia"}
+                                                                        >
+                                                                            F
+                                                                        </button>
+                                                                    ) : (
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 mx-auto opacity-50" />
+                                                                    )}
+                                                                </td>
+                                                            );
+                                                        })}
+                                                    </tr>
+                                                );
+                                            });
+                                        })()}
                                         {users.length === 0 && (
                                             <tr>
                                                 <td colSpan={10} className="py-8 text-center text-slate-400 text-sm">
@@ -971,139 +1105,66 @@ export default function AdminPage() {
                 {
                     activeTab === 'members' && (
                         <div ref={cardsContainerRef} className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 print:grid-cols-2 print:gap-4" : "flex flex-col gap-4"}>
-                            {Array.isArray(users) && [...users].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).filter(u => {
-                                const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
-                                const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
-                                return matchesName && matchesCommunity;
-                            }).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((user) => (
-                                <div key={user.id} className={viewMode === 'grid' ? "flex flex-col gap-3" : "flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 hover:border-blue-300 transition-all gap-4"}>
-                                    {/* Hidden Card for capture (Always present in DOM but hidden from view if in list mode) */}
-                                    <div className={viewMode === 'grid' ? "" : "absolute -left-[9999px] top-0 opacity-0 pointer-events-none"}>
-                                        <div
-                                            id={`card-${user.id}`}
-                                            className="card-to-pdf bg-white rounded-2xl p-6 shadow-sm flex flex-col items-center gap-4 break-inside-avoid print:border-black print:shadow-none"
-                                            style={{ backgroundColor: '#ffffff', border: '2px solid #f3f4f6', minWidth: '300px' }}
-                                        >
-                                            <div className="w-full border-b pb-3 text-center" style={{ borderBottomColor: '#f3f4f6' }}>
-                                                <h3 className="font-bold text-lg text-gray-800 uppercase tracking-wide" style={{ color: '#1f2937' }}>{user.fullName}</h3>
-                                                <div className="flex items-center justify-center gap-2 mt-1">
-                                                    <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter" style={{ color: '#3b82f6', backgroundColor: '#eff6ff' }}>Miembro Activo</span>
-                                                    {user.communityNumber && (
-                                                        <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter" style={{ color: '#64748b', backgroundColor: '#f1f5f9' }}>Comunidad {user.communityNumber}</span>
-                                                    )}
+                            {(() => {
+                                const processedIds = new Set<number>();
+                                const filteredAndSorted = Array.isArray(users) ? [...users].sort((a, b) => {
+                                    const numA = parseInt(a.communityNumber || '999')
+                                    const numB = parseInt(b.communityNumber || '999')
+                                    if (numA !== numB) return numA - numB
+                                    return a.fullName.localeCompare(b.fullName)
+                                }).filter(u => {
+                                    const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
+                                    const matchesCommunity = selectedCommunity === 'all' || u.communityNumber === selectedCommunity;
+                                    return matchesName && matchesCommunity;
+                                }) : [];
+
+                                return filteredAndSorted.map((user) => {
+                                    if (processedIds.has(user.id)) return null;
+
+                                    const partner = user.partnerId ? Array.isArray(users) ? users.find(u => u.id === user.partnerId) : null : null;
+                                    if (partner) processedIds.add(partner.id);
+                                    processedIds.add(user.id);
+
+                                    return (
+                                        <div key={user.id} className={viewMode === 'grid' ? "flex flex-col gap-6" : "flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 hover:border-blue-300 transition-all gap-4"}>
+                                            <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-4 w-full" : "flex flex-col md:flex-row md:items-center flex-1 gap-4"}>
+                                                <div className="flex flex-col gap-3 flex-1 min-w-0">
+                                                    <MemberCard user={user} viewMode={viewMode} />
+                                                    <MemberActions
+                                                        user={user}
+                                                        viewMode={viewMode}
+                                                        downloadingId={downloadingId}
+                                                        onShare={handleShareCard}
+                                                        onEdit={openEditModal}
+                                                        onDownload={handleDownloadImage}
+                                                        onDelete={handleDeleteUser}
+                                                    />
                                                 </div>
-                                            </div>
-
-                                            <div className="qr-container p-3 bg-white rounded-xl border shadow-inner" style={{ backgroundColor: '#ffffff', borderColor: '#f3f4f6' }}>
-                                                <QRCodeCanvas value={user.qrCode} size={160} level="H" />
-                                            </div>
-
-                                            <div className="text-center text-[10px] font-mono tracking-widest mt-2" style={{ color: '#9ca3af' }}>
-                                                ID: {user.id.toString().padStart(4, '0')}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {viewMode === 'grid' ? (
-                                        <>
-                                            {/* Acciones (Grid) */}
-                                            <div className="flex flex-col gap-2 print:hidden w-full">
-
-                                                <button
-                                                    onClick={() => handleShareCard(user)}
-                                                    disabled={downloadingId !== null}
-                                                    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/10 active:scale-95 transition-all disabled:opacity-50"
-                                                >
-                                                    {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
-                                                    Enviar por WhatsApp
-                                                </button>
-
-                                                <div className="grid grid-cols-3 gap-2">
-                                                    <button
-                                                        onClick={() => openEditModal(user)}
-                                                        className="flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200"
-                                                        title="Editar"
-                                                    >
-                                                        <Pencil size={18} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDownloadImage(user)}
-                                                        className="flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200"
-                                                        title="Descargar Foto"
-                                                    >
-                                                        <Download size={18} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteUser(user)}
-                                                        className="flex items-center justify-center bg-rose-50 text-rose-600 py-3 rounded-xl hover:bg-rose-100"
-                                                        title="Eliminar"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {/* List Item View Optimized for Mobile */}
-                                            <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
-                                                <div className="bg-blue-50 dark:bg-blue-900/20 p-2.5 rounded-2xl flex-shrink-0 border border-blue-100/50 dark:border-blue-800/30">
-                                                    <QRCodeSVG value={user.qrCode} size={40} />
-                                                </div>
-                                                <div className="flex flex-col min-w-0 overflow-hidden">
-                                                    <h3 className="font-bold text-slate-900 dark:text-white uppercase text-sm md:text-base leading-tight truncate">
-                                                        {user.fullName}
-                                                    </h3>
-                                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-                                                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
-                                                            ID: {user.id.toString().padStart(4, '0')}
-                                                        </span>
-                                                        {user.communityNumber && (
-                                                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                                                                <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></span>
-                                                                Com. {user.communityNumber}
-                                                            </span>
-                                                        )}
+                                                {partner && (
+                                                    <div className="flex flex-col gap-3 flex-1 min-w-0">
+                                                        <MemberCard user={partner} viewMode={viewMode} isPartner />
+                                                        <MemberActions
+                                                            user={partner}
+                                                            viewMode={viewMode}
+                                                            downloadingId={downloadingId}
+                                                            onShare={handleShareCard}
+                                                            onEdit={openEditModal}
+                                                            onDownload={handleDownloadImage}
+                                                            onDelete={handleDeleteUser}
+                                                        />
                                                     </div>
-                                                </div>
+                                                )}
                                             </div>
 
-                                            <div className="flex items-center gap-1.5 print:hidden ml-auto">
-                                                <button
-                                                    onClick={() => openEditModal(user)}
-                                                    className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95"
-                                                    title="Editar"
-                                                >
-                                                    <Pencil size={18} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleShareCard(user)}
-                                                    disabled={downloadingId !== null}
-                                                    className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95 disabled:opacity-50"
-                                                    title="WhatsApp"
-                                                >
-                                                    {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDownloadImage(user)}
-                                                    disabled={downloadingId !== null}
-                                                    className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95 disabled:opacity-50"
-                                                    title="Descargar Foto"
-                                                >
-                                                    <Download size={18} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteUser(user)}
-                                                    className="p-2.5 bg-slate-100 dark:bg-slate-800 text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-all active:scale-95"
-                                                    title="Eliminar"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            ))}
+                                            {partner && viewMode === 'list' && (
+                                                <div className="flex items-center gap-2 px-3 py-1 bg-pink-50 dark:bg-pink-900/10 text-pink-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-pink-100 dark:border-pink-900/30">
+                                                    PAREJA ENLAZADA
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                }).filter(Boolean);
+                            })()}
                             {/* Paginación */}
                             {Array.isArray(users) && users.filter(u => {
                                 const matchesName = u.fullName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -1269,5 +1330,123 @@ export default function AdminPage() {
         }
       `}</style>
         </div >
+    )
+}
+
+// --- SUB-COMPONENTES PARA LA LISTA ---
+function MemberCard({ user, viewMode, isPartner }: { user: User, viewMode: 'grid' | 'list', isPartner?: boolean }) {
+    return (
+        <div className={viewMode === 'list' ? "flex items-center gap-3 md:gap-4 min-w-0 flex-1" : "flex flex-col w-full"}>
+            {/* Hidden Card for capture (Always present in DOM but hidden from view if in list mode) */}
+            <div className={viewMode === 'grid' ? "mb-4" : "absolute -left-[9999px] top-0 opacity-0 pointer-events-none"}>
+                <div
+                    id={`card-${user.id}`}
+                    className="card-to-pdf bg-white rounded-2xl p-6 shadow-sm flex flex-col items-center gap-4 break-inside-avoid print:border-black print:shadow-none mx-auto"
+                    style={{ backgroundColor: '#ffffff', border: '2px solid #f3f4f6', minWidth: '300px', maxWidth: '300px' }}
+                >
+                    <div className="w-full border-b pb-3 text-center" style={{ borderBottomColor: '#f3f4f6' }}>
+                        <h3 className="font-bold text-lg text-gray-800 uppercase tracking-wide truncate" style={{ color: '#1f2937' }}>{user.fullName}</h3>
+                        <div className="flex items-center justify-center gap-2 mt-1">
+                            <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter" style={{ color: isPartner ? '#db2777' : '#3b82f6', backgroundColor: isPartner ? '#fdf2f8' : '#eff6ff' }}>
+                                {isPartner ? 'Cónyuge' : 'Miembro Activo'}
+                            </span>
+                            {user.communityNumber && (
+                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter" style={{ color: '#64748b', backgroundColor: '#f1f5f9' }}>Comunidad {user.communityNumber}</span>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="qr-container p-3 bg-white rounded-xl border shadow-inner" style={{ backgroundColor: '#ffffff', borderColor: '#f3f4f6' }}>
+                        <QRCodeCanvas value={user.qrCode} size={160} level="H" />
+                    </div>
+
+                    <div className="text-center text-[10px] font-mono tracking-widest mt-2" style={{ color: '#9ca3af' }}>
+                        ID: {user.id.toString().padStart(4, '0')}
+                    </div>
+                </div>
+            </div>
+
+            {viewMode === 'list' && (
+                <>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-2.5 rounded-2xl flex-shrink-0 border border-blue-100/50 dark:border-blue-800/30">
+                        <QRCodeSVG value={user.qrCode} size={40} />
+                    </div>
+                    <div className="flex flex-col min-w-0 overflow-hidden">
+                        <h3 className="font-bold text-slate-900 dark:text-white uppercase text-sm md:text-base leading-tight truncate">
+                            {user.fullName}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${isPartner ? 'bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400' : 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'}`}>
+                                ID: {user.id.toString().padStart(4, '0')}
+                            </span>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    )
+}
+
+function MemberActions({
+    user,
+    viewMode,
+    downloadingId,
+    onShare,
+    onEdit,
+    onDownload,
+    onDelete
+}: {
+    user: User,
+    viewMode: 'grid' | 'list',
+    downloadingId: number | null,
+    onShare: (u: User) => void,
+    onEdit: (u: User) => void,
+    onDownload: (u: User) => void,
+    onDelete: (u: User) => void
+}) {
+    return (
+        <div className={viewMode === 'list' ? "flex items-center gap-1.5 print:hidden ml-auto" : "flex flex-col gap-2 w-full"}>
+            <button
+                onClick={() => onShare(user)}
+                disabled={downloadingId !== null}
+                className={viewMode === 'list'
+                    ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95 disabled:opacity-50"
+                    : "flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/10 active:scale-95 transition-all disabled:opacity-50 w-full"}
+                title="Compartir por WhatsApp"
+            >
+                {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
+                {viewMode === 'grid' && "Enviar QR"}
+            </button>
+
+            <div className={viewMode === 'list' ? "flex items-center gap-1.5" : "grid grid-cols-3 gap-2 w-full"}>
+                <button
+                    onClick={() => onEdit(user)}
+                    className={viewMode === 'list'
+                        ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95"
+                        : "flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200"}
+                    title="Editar"
+                >
+                    <Pencil size={18} />
+                </button>
+                <button
+                    onClick={() => onDownload(user)}
+                    className={viewMode === 'list'
+                        ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95"
+                        : "flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200"}
+                    title="Descargar Foto"
+                >
+                    <Download size={18} />
+                </button>
+                <button
+                    onClick={() => onDelete(user)}
+                    className={viewMode === 'list'
+                        ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-all active:scale-95"
+                        : "flex items-center justify-center bg-rose-50 text-rose-600 py-3 rounded-xl hover:bg-rose-100"}
+                    title="Eliminar"
+                >
+                    <Trash2 size={18} />
+                </button>
+            </div>
+        </div>
     )
 }

@@ -8,6 +8,7 @@ export const runtime = 'nodejs'
 export async function GET() {
     try {
         const users = await prisma.user.findMany({
+            include: { partner: true }, // Incluimos la pareja vinculada
             orderBy: { fullName: 'asc' },
         })
         return NextResponse.json(users)
@@ -18,16 +19,44 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
     try {
-        const { fullName, communityNumber } = await request.json()
+        const { fullName, communityNumber, isCouple, partnerName } = await request.json()
 
-        // Generamos el QR explícitamente para asegurar consistencia inmediata
-        const qrCode = randomUUID()
+        // Si es pareja, realizamos una transacción para crear ambos
+        if (isCouple && partnerName) {
+            const result = await prisma.$transaction(async (tx) => {
+                const user1 = await tx.user.create({
+                    data: {
+                        fullName,
+                        communityNumber: communityNumber || null,
+                        qrCode: randomUUID()
+                    }
+                })
+
+                const user2 = await tx.user.create({
+                    data: {
+                        fullName: partnerName,
+                        communityNumber: communityNumber || null,
+                        qrCode: randomUUID(),
+                        partner: { connect: { id: user1.id } }
+                    }
+                })
+
+                // Vinculamos de vuelta al primero
+                const updatedUser1 = await tx.user.update({
+                    where: { id: user1.id },
+                    data: { partner: { connect: { id: user2.id } } }
+                })
+
+                return [updatedUser1, user2]
+            })
+            return NextResponse.json(result[0])
+        }
 
         const user = await prisma.user.create({
             data: {
                 fullName,
                 communityNumber: communityNumber || null,
-                qrCode
+                qrCode: randomUUID()
             },
         })
         return NextResponse.json(user)
