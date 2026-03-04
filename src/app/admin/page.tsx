@@ -597,7 +597,7 @@ export default function AdminPage() {
                 const addUserRow = (u: User, isPartnerRow: boolean) => {
                     const row = [
                         entityCounter.toString(),
-                        isPartnerRow ? `   ↳ ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase(),
+                        isPartnerRow ? `   -> ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase(),
                         u.communityNumber || '-'
                     ]
 
@@ -651,12 +651,26 @@ export default function AdminPage() {
                     2: { cellWidth: 15, halign: 'center' }
                 },
                 didParseCell: (data) => {
-                    if (data.section === 'body' && data.column.index >= 3) {
-                        if (data.cell.text[0] === 'F') {
-                            data.cell.styles.textColor = [225, 29, 72]
-                        } else if (data.cell.text[0] === 'A') {
-                            data.cell.styles.textColor = [5, 150, 105]
-                            data.cell.styles.fontStyle = 'bold'
+                    // Si la celda es del nombre y tiene el prefijo de pareja (->)
+                    // o si sabemos que es una fila de pareja por la lógica de procesamiento
+                    if (data.section === 'body') {
+                        const cellText = data.cell.text.join('');
+                        if (cellText.includes('->')) {
+                            data.row.cells[1].styles.fontStyle = 'bold';
+                            // Aplicar un fondo sutil a toda la fila de la pareja
+                            Object.values(data.row.cells).forEach((cell: any) => {
+                                cell.styles.fillColor = [245, 248, 255]; // Azul muy claro
+                            });
+                        }
+
+                        // Colores para asistencia
+                        if (data.column.index >= 3) {
+                            if (cellText === 'F') {
+                                data.cell.styles.textColor = [225, 29, 72];
+                            } else if (cellText === 'A') {
+                                data.cell.styles.textColor = [5, 150, 105];
+                                data.cell.styles.fontStyle = 'bold';
+                            }
                         }
                     }
                 }
@@ -1076,8 +1090,8 @@ export default function AdminPage() {
                                                     <tr
                                                         key={user.id}
                                                         className={`group transition-all duration-300 ${isFirstOfCouple ? 'bg-blue-50/30 dark:bg-blue-900/10' :
-                                                                isSecondOfCouple ? 'bg-blue-50/30 dark:bg-blue-900/10' :
-                                                                    'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                                            isSecondOfCouple ? 'bg-blue-50/30 dark:bg-blue-900/10' :
+                                                                'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                                             }`}
                                                     >
                                                         <td className={`py-4 px-3 md:px-8 text-slate-900 dark:text-white font-black text-[13px] sticky left-0 z-20 transition-all border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/20 dark:bg-blue-950/20' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
@@ -1085,7 +1099,7 @@ export default function AdminPage() {
                                                             <div className="flex items-center gap-3 relative">
                                                                 {isPartOfCouple && (
                                                                     <div className={`absolute -left-3 md:-left-8 w-1.5 transition-all bg-blue-500/50 ${isFirstOfCouple ? 'h-[100%] top-[50%] rounded-t-full' :
-                                                                            'h-[100%] bottom-[50%] rounded-b-full'
+                                                                        'h-[100%] bottom-[50%] rounded-b-full'
                                                                         }`} />
                                                                 )}
                                                                 <div className="flex flex-col min-w-0">
@@ -1117,7 +1131,7 @@ export default function AdminPage() {
                                                                 <td
                                                                     key={idx}
                                                                     className={`py-4 px-2 text-center border-r border-slate-100 dark:border-slate-800 transition-all ${isToday ? 'bg-blue-100/30 dark:bg-blue-900/20' :
-                                                                            isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/5 dark:bg-blue-900/5' : ''
+                                                                        isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/5 dark:bg-blue-900/5' : ''
                                                                         }`}
                                                                 >
                                                                     {isPresent ? (
