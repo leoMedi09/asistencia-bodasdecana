@@ -31,7 +31,7 @@ export default function AdminPage() {
     const [isGeneratingFullReport, setIsGeneratingFullReport] = useState(false)
     const [isGeneratingExcel, setIsGeneratingExcel] = useState(false)
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
-    const [downloadingId, setDownloadingId] = useState<number | null>(null)
+    const [activeAction, setActiveAction] = useState<{ id: number | null, type: 'share' | 'download' | null }>({ id: null, type: null })
     const [searchQuery, setSearchQuery] = useState('')
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
     const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -441,7 +441,7 @@ export default function AdminPage() {
         const cardElement = document.getElementById(`card-${user.id}`)
         if (!cardElement) return
 
-        setDownloadingId(user.id)
+        setActiveAction({ id: user.id, type: 'download' })
         try {
             // Wait for rendering
             await new Promise(resolve => setTimeout(resolve, 100))
@@ -478,7 +478,7 @@ export default function AdminPage() {
             console.error('Error downloading image:', error)
             alert('No se pudo generar la imagen. Intenta cerrar otras pestañas o usar un navegador más moderno.')
         } finally {
-            setDownloadingId(null)
+            setActiveAction({ id: null, type: null })
         }
     }
 
@@ -487,7 +487,7 @@ export default function AdminPage() {
         const cardElement = document.getElementById(`card-${user.id}`)
         if (!cardElement) return
 
-        setDownloadingId(user.id)
+        setActiveAction({ id: user.id, type: 'share' })
         try {
             await new Promise(resolve => setTimeout(resolve, 100))
             cardElement.style.transition = 'none'
@@ -525,27 +525,33 @@ export default function AdminPage() {
                 try {
                     await navigator.share({
                         files: [file],
-                        title: `Carnet`,
-                        text: `Carnet de Asistencia: ${user.fullName}`,
+                        title: `Carnet - ${user.fullName}`,
+                        text: `Comparto el carnet de asistencia de ${user.fullName}`,
                     })
                 } catch (shareErr: any) {
                     if (shareErr.name !== 'AbortError') {
                         console.error('Share error:', shareErr)
+                        // Fallback manual si el navigator.share falla pero dijo que podía
+                        triggerManualDownload(blob, fileName)
                     }
                 }
             } else {
-                // Manual download fallback
-                const link = document.createElement('a')
-                link.href = URL.createObjectURL(blob)
-                link.download = fileName
-                link.click()
-                alert('Tu celular no permite compartir directo. La imagen se descargó.')
+                triggerManualDownload(blob, fileName)
             }
         } catch (error) {
             console.error('Error sharing card:', error)
+            alert('Error al generar la imagen para compartir.')
         } finally {
-            setDownloadingId(null)
+            setActiveAction({ id: null, type: null })
         }
+    }
+
+    const triggerManualDownload = (blob: Blob, fileName: string) => {
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = fileName
+        link.click()
+        alert('Tu navegador no permite compartir archivos directamente. El carnet se ha descargado; puedes enviarlo manualmente por WhatsApp.')
     }
 
 
@@ -1339,7 +1345,7 @@ export default function AdminPage() {
                                                     <MemberActions
                                                         user={displayUser}
                                                         viewMode={viewMode}
-                                                        downloadingId={downloadingId}
+                                                        activeAction={activeAction}
                                                         onShare={handleShareCard}
                                                         onEdit={openEditModal}
                                                         onDownload={handleDownloadImage}
@@ -1353,7 +1359,7 @@ export default function AdminPage() {
                                                         <MemberActions
                                                             user={displayPartner}
                                                             viewMode={viewMode}
-                                                            downloadingId={downloadingId}
+                                                            activeAction={activeAction}
                                                             onShare={handleShareCard}
                                                             onEdit={openEditModal}
                                                             onDownload={handleDownloadImage}
@@ -1367,7 +1373,7 @@ export default function AdminPage() {
                                                         <MemberActions
                                                             user={displayUser}
                                                             viewMode={viewMode}
-                                                            downloadingId={null}
+                                                            activeAction={{ id: null, type: null }}
                                                             onShare={() => { }}
                                                             onEdit={openEditModal}
                                                             onDownload={() => { }}
@@ -1627,7 +1633,7 @@ function MemberCard({ user, viewMode, isPartner }: { user: User, viewMode: 'grid
 function MemberActions({
     user,
     viewMode,
-    downloadingId,
+    activeAction,
     onShare,
     onEdit,
     onDownload,
@@ -1637,7 +1643,7 @@ function MemberActions({
 }: {
     user: User,
     viewMode: 'grid' | 'list',
-    downloadingId: number | null,
+    activeAction: { id: number | null, type: 'share' | 'download' | null },
     onShare: (u: User) => void,
     onEdit: (u: User) => void,
     onDownload: (u: User) => void,
@@ -1652,25 +1658,25 @@ function MemberActions({
                     <div className={viewMode === 'list' ? "flex items-center gap-1.5" : "grid grid-cols-2 gap-2"}>
                         <button
                             onClick={() => onShare(user)}
-                            disabled={downloadingId !== null}
+                            disabled={activeAction.id !== null}
                             className={viewMode === 'list'
                                 ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95 disabled:opacity-50"
                                 : "flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/10 active:scale-95 transition-all disabled:opacity-50 w-full"}
                             title="Compartir por WhatsApp"
                         >
-                            {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
+                            {activeAction.id === user.id && activeAction.type === 'share' ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
                             {viewMode === 'grid' && "Enviar"}
                         </button>
 
                         <button
                             onClick={() => onDownload(user)}
-                            disabled={downloadingId !== null}
+                            disabled={activeAction.id !== null}
                             className={viewMode === 'list'
                                 ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95 disabled:opacity-50"
                                 : "flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200 active:scale-95 transition-all disabled:opacity-50 w-full"}
                             title="Descargar Carnet"
                         >
-                            {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+                            {activeAction.id === user.id && activeAction.type === 'download' ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
                             {viewMode === 'grid' && "Carnet"}
                         </button>
                     </div>
