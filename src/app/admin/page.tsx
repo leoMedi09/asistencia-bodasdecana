@@ -1728,9 +1728,4 @@ function MemberActions({
             </div>
         </div>
     )
-                )
-}
-            </div >
-        </div >
-    )
 }
