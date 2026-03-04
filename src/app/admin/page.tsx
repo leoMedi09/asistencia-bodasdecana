@@ -1284,8 +1284,8 @@ export default function AdminPage() {
                 {/* Modal de Edición */}
                 {
                     editingUser && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
-                            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 border-2 border-slate-100 dark:border-slate-800 animate-in zoom-in duration-300">
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+                            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 border-2 border-slate-100 dark:border-slate-800 animate-in zoom-in duration-300 relative z-[210]">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-xl font-black text-slate-900 dark:text-white">Editar Miembro</h3>
                                     <button onClick={() => setEditingUser(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all">
@@ -1450,10 +1450,14 @@ function MemberActions({
 
             <div className={viewMode === 'list' ? "flex items-center gap-1.5" : "grid grid-cols-3 gap-2 w-full"}>
                 <button
-                    onClick={() => onEdit(user)}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onEdit(user);
+                    }}
                     className={viewMode === 'list'
-                        ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95"
-                        : "flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200"}
+                        ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95 cursor-pointer"
+                        : "flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200 cursor-pointer"}
                     title="Editar"
                 >
                     <Pencil size={18} />
