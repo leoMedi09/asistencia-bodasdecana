@@ -492,7 +492,7 @@ export default function AdminPage() {
             await new Promise(resolve => setTimeout(resolve, 100))
             cardElement.style.transition = 'none'
             const canvas = await html2canvas(cardElement, {
-                scale: 3, // Higher scale for better QR readability on share
+                scale: 2, // Moderate scale for mobile compatibility
                 useCORS: true,
                 backgroundColor: '#ffffff',
                 logging: false,
@@ -518,20 +518,26 @@ export default function AdminPage() {
                 return
             }
 
-            const fileName = `carnet-${user.fullName.replace(/\s+/g, '-').toLowerCase()}.png`
-            const file = new File([blob], fileName, { type: 'image/png' })
+            const fileName = `carnet-${user.id}.png`
+            const file = new File([blob], fileName, {
+                type: 'image/png',
+                lastModified: new Date().getTime()
+            })
 
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            // Web Share API with files is very picky. 
+            // We try to use it if available, but wrap it in a try-catch for better resilience.
+            const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+
+            if (navigator.share && (canShareFiles || !navigator.canShare)) {
                 try {
                     await navigator.share({
                         files: [file],
-                        title: `Carnet - ${user.fullName}`,
-                        text: `Comparto el carnet de asistencia de ${user.fullName}`,
+                        title: `Carnet`,
+                        text: `Asistencia: ${user.fullName}`,
                     })
                 } catch (shareErr: any) {
                     if (shareErr.name !== 'AbortError') {
                         console.error('Share error:', shareErr)
-                        // Fallback manual si el navigator.share falla pero dijo que podía
                         triggerManualDownload(blob, fileName)
                     }
                 }
@@ -540,7 +546,7 @@ export default function AdminPage() {
             }
         } catch (error) {
             console.error('Error sharing card:', error)
-            alert('Error al generar la imagen para compartir.')
+            alert('Error al generar la imagen.')
         } finally {
             setActiveAction({ id: null, type: null })
         }
