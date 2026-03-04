@@ -1078,7 +1078,7 @@ export default function AdminPage() {
                                 <table className="w-full text-left border-separate border-spacing-0 min-w-[900px]">
                                     <thead>
                                         <tr>
-                                            <th className="py-6 px-2 md:px-8 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-40 border-b-2 border-slate-100 dark:border-slate-800 shadow-[4px_0_12px_-2px_rgba(0,0,0,0.2)] max-w-[100px] md:max-w-none md:min-w-[250px]">
+                                            <th className="py-6 px-3 md:px-8 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-50 border-b-2 border-slate-100 dark:border-slate-800 shadow-[4px_0_12px_-2px_rgba(0,0,0,0.2)] max-w-[100px] md:max-w-none md:min-w-[250px]">
                                                 INTEGRANTE
                                             </th>
                                             <th className="py-6 px-1 md:px-4 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center border-b-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 z-30 min-w-[35px]">
@@ -1190,7 +1190,7 @@ export default function AdminPage() {
                                                                 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                                             }`}
                                                     >
-                                                        <td className={`py-3 md:py-4 px-2 md:px-8 text-slate-900 dark:text-white font-black text-[10px] md:text-[13px] sticky left-0 z-40 transition-all border-r border-slate-100 dark:border-slate-800 shadow-[4px_0_12px_-2px_rgba(0,0,0,0.2)] max-w-[100px] md:max-w-none ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/40 dark:bg-blue-950/40' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
+                                                        <td className={`py-3 md:py-4 px-2 md:px-8 text-slate-900 dark:text-white font-black text-[10px] md:text-[13px] sticky left-0 z-40 transition-all border-r border-slate-100 dark:border-slate-800 shadow-[4px_0_12px_-2px_rgba(0,0,0,0.2)] max-w-[100px] md:max-w-none ${isFirstOfCouple || isSecondOfCouple ? 'bg-[#f8faff] dark:bg-[#0f172a]' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
                                                             }`}>
                                                             <div className="flex items-center gap-1.5 md:gap-3 relative overflow-hidden">
                                                                 {isPartOfCouple && (
