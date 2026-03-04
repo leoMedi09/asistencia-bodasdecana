@@ -274,12 +274,13 @@ export default function AdminPage() {
             }
 
             // Crear el encabezado de las columnas
-            const tableColumn = ["ID", "NOMBRE Y APELLIDO", "N° COM", ...meetingDates.map(m => m.str)]
+            const tableColumn = ["№", "NOMBRE Y APELLIDO", "N° COM", ...meetingDates.map(m => m.str)]
 
             // Crear las filas de datos con agrupación de parejas y encabezados de comunidad
             const processedIds = new Set<number>()
             const tableRows: any[][] = []
             let currentCommunity: string | null = null
+            let entityCounter = 0
 
             allUsers.forEach(user => {
                 if (processedIds.has(user.id)) return
@@ -287,17 +288,19 @@ export default function AdminPage() {
                 // Encabezado de comunidad
                 if (user.communityNumber !== currentCommunity) {
                     currentCommunity = user.communityNumber || '-'
+                    entityCounter = 0 // Reiniciar contador para cada comunidad
                     tableRows.push([]) // Fila vacía para separar
                     tableRows.push(["", `--- COMUNIDAD ${currentCommunity} ---`, ""])
                 }
 
                 const partner = user.partnerId ? allUsers.find(u => u.id === user.partnerId) : null
+                entityCounter++ // Aumentar contador por cada entidad (pareja o individual)
 
                 // Función para añadir una fila de usuario con indicador de pareja
                 const addUserRow = (u: User, isPartnerRow = false) => {
                     const name = isPartnerRow ? `   ↳ ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase()
                     const row = [
-                        u.id.toString().padStart(4, '0'),
+                        entityCounter.toString(),
                         name,
                         u.communityNumber || '-'
                     ]
@@ -550,11 +553,12 @@ export default function AdminPage() {
             doc.setTextColor(0, 0, 0)
             doc.text(`ASISTENCIA DE ${months[selectedMonth]}`, 148, 35, { align: 'center' })
 
-            const tableColumn = ["ID", "NOMBRE Y APELLIDO", "N° COM", ...meetingDates.map(m => m.str)]
+            const tableColumn = ["№", "NOMBRE Y APELLIDO", "N° COM", ...meetingDates.map(m => m.str)]
 
             const processedIds = new Set<number>()
             const tableRows: any[][] = []
             let currentCommunity: string | null = null
+            let entityCounter = 0
 
             allUsers.forEach(user => {
                 if (processedIds.has(user.id)) return
@@ -562,6 +566,7 @@ export default function AdminPage() {
                 // Encabezado de comunidad
                 if (user.communityNumber !== currentCommunity) {
                     currentCommunity = user.communityNumber || '-'
+                    entityCounter = 0 // Reiniciar contador por comunidad
                     tableRows.push([
                         {
                             content: `--- COMUNIDAD ${currentCommunity} ---`,
@@ -572,11 +577,12 @@ export default function AdminPage() {
                 }
 
                 const partner = user.partnerId ? allUsers.find(u => u.id === user.partnerId) : null
+                entityCounter++
 
                 // Función para añadir una fila de usuario
                 const addUserRow = (u: User, isPartnerRow: boolean) => {
                     const row = [
-                        u.id.toString().padStart(4, '0'),
+                        entityCounter.toString(),
                         isPartnerRow ? `   ↳ ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase(),
                         u.communityNumber || '-'
                     ]
