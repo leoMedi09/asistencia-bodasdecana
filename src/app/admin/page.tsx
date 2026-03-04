@@ -568,6 +568,8 @@ export default function AdminPage() {
             doc.text(`ASISTENCIA DE ${months[selectedMonth]}`, 148, 35, { align: 'center' })
 
             const tableColumn = ["№", "NOMBRE Y APELLIDO", "N° COM", ...meetingDates.map(m => m.str)]
+            // Reducir un poco el tamaño de fuente para que quepan las fechas si son muchas
+            const fontSize = meetingDates.length > 10 ? 7 : 8;
 
             const processedIds = new Set<number>()
             const tableRows: any[][] = []
@@ -594,12 +596,20 @@ export default function AdminPage() {
                 entityCounter++
 
                 // Función para añadir una fila de usuario
-                const addUserRow = (u: User, isPartnerRow: boolean) => {
-                    const row = [
-                        entityCounter.toString(),
-                        isPartnerRow ? `   -> ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase(),
-                        u.communityNumber || '-'
-                    ]
+                const addUserRow = (u: User, isPartnerRow: boolean, hasPartner: boolean) => {
+                    const row = []
+
+                    // Columna № con rowSpan para parejas
+                    if (!isPartnerRow) {
+                        if (hasPartner) {
+                            row.push({ content: entityCounter.toString(), rowSpan: 2, styles: { halign: 'center', valign: 'middle' } })
+                        } else {
+                            row.push(entityCounter.toString())
+                        }
+                    }
+
+                    row.push(isPartnerRow ? `   -> ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase())
+                    row.push(u.communityNumber || '-')
 
                     const today = new Date()
                     today.setHours(0, 0, 0, 0)
@@ -619,16 +629,15 @@ export default function AdminPage() {
                         }
                     })
 
-                    // Añadimos la fila a tableRows. 
-                    // El estilo se aplicará visualmente mediante la sangría "↳".
                     tableRows.push(row)
                     processedIds.add(u.id)
                 }
 
                 // Añadir usuario y su pareja (para que salgan seguidos)
-                addUserRow(user, false)
+                const hasPartner = !!(partner && !processedIds.has(partner?.id));
+                addUserRow(user, false, hasPartner)
                 if (partner && !processedIds.has(partner.id)) {
-                    addUserRow(partner, true)
+                    addUserRow(partner, true, false)
                 }
             })
 
@@ -643,7 +652,7 @@ export default function AdminPage() {
                 body: tableRows,
                 startY: 45,
                 theme: 'grid',
-                styles: { fontSize: 8, cellPadding: 2, textColor: [0, 0, 0] },
+                styles: { fontSize: fontSize, cellPadding: 2, textColor: [0, 0, 0] },
                 headStyles: { fillColor: [0, 0, 0], textColor: 255, fontStyle: 'bold', halign: 'center' },
                 columnStyles: {
                     0: { cellWidth: 15 },
