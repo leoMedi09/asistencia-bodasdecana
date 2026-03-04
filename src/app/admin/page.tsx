@@ -38,6 +38,7 @@ export default function AdminPage() {
     const [editName, setEditName] = useState('')
     const [editCommunityNumber, setEditCommunityNumber] = useState('')
     const [selectedCommunity, setSelectedCommunity] = useState<string>('all')
+    const [selectedAuditCommunity, setSelectedAuditCommunity] = useState<string>('all')
     const [isCouple, setIsCouple] = useState(false)
     const [partnerName, setPartnerName] = useState('')
     const [editPartnerName, setEditPartnerName] = useState('')
@@ -879,7 +880,7 @@ export default function AdminPage() {
                                         </label>
                                     </div>
 
-                                    <div className={isCouple ? "md:col-span-5 flex flex-col gap-2" : "md:col-span-7 flex flex-col gap-2"}>
+                                    <div className={isCouple ? "md:col-span-5 flex flex-col gap-2" : "md:col-span-11 flex flex-col gap-2"}>
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">{isCouple ? "Nombre Cónyuge 1" : "Nombre Completo"}</label>
                                         <input
                                             type="text"
@@ -905,28 +906,6 @@ export default function AdminPage() {
                                         </div>
                                     )}
 
-                                    <div className="md:col-span-1 flex flex-col gap-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 text-center">Sexo</label>
-                                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl h-[60px]">
-                                            <button
-                                                type="button"
-                                                onClick={() => setNewGender('M')}
-                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${newGender === 'M' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}
-                                                title="Hombre"
-                                            >
-                                                <span className="font-black text-sm">M</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setNewGender('F')}
-                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${newGender === 'F' ? 'bg-pink-600 text-white shadow-md' : 'text-slate-500'}`}
-                                                title="Mujer"
-                                            >
-                                                <span className="font-black text-sm">F</span>
-                                            </button>
-                                        </div>
-                                    </div>
-
                                     <div className="md:col-span-1 flex flex-col gap-2 text-center">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Comunidad</label>
                                         <input
@@ -938,7 +917,7 @@ export default function AdminPage() {
                                             required
                                         />
                                     </div>
-                                    <div className={isCouple ? "md:col-span-12 flex items-end mt-2" : "md:col-span-3 flex items-end"}>
+                                    <div className="md:col-span-12 flex items-end mt-2">
                                         <button
                                             type="submit"
                                             disabled={loading}
@@ -1042,6 +1021,25 @@ export default function AdminPage() {
                                     </div>
 
                                     <div className="flex flex-col gap-1.5 flex-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Comunidad:</label>
+                                        <div className="relative bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:border-blue-400 group">
+                                            <select
+                                                value={selectedAuditCommunity}
+                                                onChange={(e) => setSelectedAuditCommunity(e.target.value)}
+                                                className="w-full bg-transparent text-slate-900 dark:text-white font-black text-sm py-3 pl-4 pr-10 outline-none cursor-pointer appearance-none"
+                                            >
+                                                <option value="all" className="bg-white dark:bg-slate-900">Todas</option>
+                                                {[...new Set(users.map(u => u.communityNumber).filter(Boolean))].sort().map(num => (
+                                                    <option key={num} value={num} className="bg-white dark:bg-slate-900">Com. {num}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-blue-500">
+                                                <ChevronRight className="rotate-90" size={16} strokeWidth={3} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1.5 flex-[2]">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Buscar en Auditoría:</label>
                                         <div className="relative group">
                                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
@@ -1131,10 +1129,12 @@ export default function AdminPage() {
                                                 const numB = parseInt(b.communityNumber || '999')
                                                 if (numA !== numB) return numA - numB
                                                 return a.fullName.localeCompare(b.fullName)
-                                            }).filter(u =>
-                                                u.fullName.toLowerCase().includes(auditSearch.toLowerCase()) ||
-                                                (u.communityNumber && u.communityNumber.includes(auditSearch))
-                                            );
+                                            }).filter(u => {
+                                                const matchesName = u.fullName.toLowerCase().includes(auditSearch.toLowerCase()) ||
+                                                    (u.communityNumber && u.communityNumber.includes(auditSearch));
+                                                const matchesCommunity = selectedAuditCommunity === 'all' || u.communityNumber === selectedAuditCommunity;
+                                                return matchesName && matchesCommunity;
+                                            });
 
                                             const processedIds = new Set<number>();
                                             const finalRows: User[] = [];
@@ -1503,7 +1503,7 @@ export default function AdminPage() {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4">
                                     <div className="flex flex-col gap-2">
                                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">N° Comunidad</label>
                                         <input
@@ -1513,48 +1513,8 @@ export default function AdminPage() {
                                             className="p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
                                         />
                                     </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1 text-center">Sexo Titular</label>
-                                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl h-full">
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditGender('M')}
-                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${editGender === 'M' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}
-                                            >
-                                                <span className="font-black text-xs tracking-widest">M</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditGender('F')}
-                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${editGender === 'F' ? 'bg-pink-600 text-white shadow-md' : 'text-slate-500'}`}
-                                            >
-                                                <span className="font-black text-xs tracking-widest">F</span>
-                                            </button>
-                                        </div>
-                                    </div>
                                 </div>
 
-                                {editPartnerId && (
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1 text-center">Sexo Cónyuge</label>
-                                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl h-14">
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditPartnerGender('M')}
-                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${editPartnerGender === 'M' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}
-                                            >
-                                                <span className="font-black text-xs tracking-widest">M</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditPartnerGender('F')}
-                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${editPartnerGender === 'F' ? 'bg-pink-600 text-white shadow-md' : 'text-slate-500'}`}
-                                            >
-                                                <span className="font-black text-xs tracking-widest">F</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
 
                                 <div className="flex flex-wrap sm:flex-nowrap gap-3 mt-4">
                                     <button
