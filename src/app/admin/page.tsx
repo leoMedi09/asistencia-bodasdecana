@@ -1486,22 +1486,22 @@ export default function AdminPage() {
                                     />
                                 </div>
 
-                                {editPartnerId && (
-                                    <div className="flex flex-col gap-2 p-4 bg-pink-50/50 dark:bg-pink-900/5 rounded-2xl border border-pink-100 dark:border-pink-900/20">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Heart size={14} className="text-pink-500" fill="currentColor" />
-                                            <label className="text-xs font-black text-pink-600 dark:text-pink-400 uppercase tracking-widest leading-none">Cónyuge / Pareja</label>
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={editPartnerName}
-                                            onChange={(e) => setEditPartnerName(e.target.value)}
-                                            className="p-4 rounded-xl border-2 border-white dark:border-slate-800 dark:bg-slate-950 focus:border-pink-500/50 focus:ring-4 focus:ring-pink-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
-                                            required
-                                            placeholder="Nombre de la pareja"
-                                        />
+                                <div className="flex flex-col gap-2 p-4 bg-pink-50/50 dark:bg-pink-900/5 rounded-2xl border border-pink-100 dark:border-pink-900/20">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Heart size={14} className="text-pink-500" fill="currentColor" />
+                                        <label className="text-xs font-black text-pink-600 dark:text-pink-400 uppercase tracking-widest leading-none">Cónyuge / Pareja</label>
                                     </div>
-                                )}
+                                    <input
+                                        type="text"
+                                        value={editPartnerName}
+                                        onChange={(e) => setEditPartnerName(e.target.value)}
+                                        className="p-4 rounded-xl border-2 border-white dark:border-slate-800 dark:bg-slate-950 focus:border-pink-500/50 focus:ring-4 focus:ring-pink-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
+                                        placeholder="Nombre de la pareja"
+                                    />
+                                    {!editPartnerId && editPartnerName && (
+                                        <p className="text-[9px] font-black text-pink-500 uppercase tracking-tight animate-pulse ml-1">Vincular como Nueva Pareja</p>
+                                    )}
+                                </div>
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col gap-2">
@@ -1676,17 +1676,32 @@ function MemberActions({
     return (
         <div className={viewMode === 'list' ? "flex items-center gap-1.5 print:hidden ml-auto" : "flex flex-col gap-2 w-full"}>
             {!onlyEditDelete && (
-                <button
-                    onClick={() => onShare(user)}
-                    disabled={downloadingId !== null}
-                    className={viewMode === 'list'
-                        ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95 disabled:opacity-50"
-                        : "flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/10 active:scale-95 transition-all disabled:opacity-50 w-full"}
-                    title="Compartir por WhatsApp"
-                >
-                    {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
-                    {viewMode === 'grid' && "Enviar QR"}
-                </button>
+                <div className={viewMode === 'list' ? "flex items-center gap-1.5" : "flex flex-col gap-2"}>
+                    <button
+                        onClick={() => onShare(user)}
+                        disabled={downloadingId !== null}
+                        className={viewMode === 'list'
+                            ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95 disabled:opacity-50"
+                            : "flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/10 active:scale-95 transition-all disabled:opacity-50 w-full"}
+                        title="Compartir por WhatsApp"
+                    >
+                        {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
+                        {viewMode === 'grid' && "Enviar QR"}
+                    </button>
+
+                    {!user.partnerId && (
+                        <button
+                            onClick={() => onEdit(user)}
+                            className={viewMode === 'list'
+                                ? "p-2.5 bg-pink-50 dark:bg-pink-900/10 text-pink-500 rounded-xl hover:bg-pink-100 transition-all active:scale-95"
+                                : "flex items-center justify-center gap-2 bg-pink-50 dark:bg-pink-900/10 text-pink-600 dark:text-pink-400 py-3 rounded-xl font-bold text-sm hover:bg-pink-100 transition-all active:scale-95 w-full"}
+                            title="Agregar Pareja"
+                        >
+                            <Heart size={18} fill={viewMode === 'grid' ? "currentColor" : "none"} />
+                            {viewMode === 'grid' && "Agregar Pareja"}
+                        </button>
+                    )}
+                </div>
             )}
 
             <div className={viewMode === 'list' ? "flex items-center gap-1.5" : "grid grid-cols-3 gap-2 w-full"}>

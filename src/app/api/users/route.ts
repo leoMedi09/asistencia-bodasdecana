@@ -100,8 +100,9 @@ export async function PATCH(request: NextRequest) {
         if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
 
         const result = await prisma.$transaction(async (tx) => {
+            const userId = parseInt(id)
             const updatedUser = await tx.user.update({
-                where: { id: parseInt(id) },
+                where: { id: userId },
                 data: {
                     fullName,
                     communityNumber: communityNumber || null,
@@ -117,6 +118,23 @@ export async function PATCH(request: NextRequest) {
                         communityNumber: communityNumber || undefined,
                         gender: partnerGender || undefined
                     }
+                })
+            } else if (!partnerId && partnerName) {
+                // Create new partner if doesn't exist but name is provided
+                const newPartner = await tx.user.create({
+                    data: {
+                        fullName: partnerName,
+                        communityNumber: communityNumber || null,
+                        qrCode: randomUUID(),
+                        gender: partnerGender || (gender === 'M' ? 'F' : 'M'),
+                        partnerId: userId
+                    }
+                })
+
+                // Update original user with new partnerId
+                await tx.user.update({
+                    where: { id: userId },
+                    data: { partnerId: newPartner.id }
                 })
             }
             return updatedUser
