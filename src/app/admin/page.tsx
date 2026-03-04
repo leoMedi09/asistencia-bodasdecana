@@ -313,8 +313,7 @@ export default function AdminPage() {
                 // Encabezado de comunidad
                 if (user.communityNumber !== currentCommunity) {
                     currentCommunity = user.communityNumber || '-'
-                    entityCounter = 0 // Reiniciar contador para cada comunidad
-                    tableRows.push([]) // Fila vacía para separar
+                    entityCounter = 0
                     tableRows.push(["", `--- COMUNIDAD ${currentCommunity} ---`, ""])
                 }
 
@@ -322,8 +321,8 @@ export default function AdminPage() {
 
                 // Función para añadir una fila de usuario con indicador de pareja
                 const addUserRow = (u: User, isPartnerRow = false) => {
-                    // Remover flecha -> y usar indentación para el cónyuge
-                    const name = isPartnerRow ? `   ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase()
+                    // Sin flecha ni excedente de espacios
+                    const name = u.fullName.toUpperCase()
                     const row = [
                         entityCounter.toString(),
                         name,
@@ -354,10 +353,16 @@ export default function AdminPage() {
                 if (partner && !processedIds.has(partner.id)) {
                     entityCounter++
                     // Orden Hombre primero
-                    const isUserMale = user.gender === 'M' || !user.gender;
-                    const isPartnerMale = partner.gender === 'M';
+                    // Orden Hombre primero estricto
+                    const isM1 = user.gender === 'M';
+                    const isF1 = user.gender === 'F';
+                    const isM2 = partner.gender === 'M';
+                    const isF2 = partner.gender === 'F';
 
-                    const first = (isUserMale || (!isUserMale && !isPartnerMale)) ? user : partner;
+                    let first = user;
+                    if ((isM2 && !isM1) || (isF1 && !isF2)) {
+                        first = partner;
+                    }
                     const second = first === user ? partner : user;
 
                     addUserRow(first, false)
@@ -628,8 +633,8 @@ export default function AdminPage() {
                         })
                     }
 
-                    // Remover flecha -> y usar indentación para el cónyuge
-                    row.push(isPartnerRow ? `   ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase())
+                    // Sin flecha ni excedente de espacios
+                    row.push(u.fullName.toUpperCase())
                     row.push(u.communityNumber || '-')
 
                     const today = new Date()
@@ -657,10 +662,16 @@ export default function AdminPage() {
                 if (partner && !processedIds.has(partner.id)) {
                     entityCounter++
                     // Orden Hombre primero
-                    const isUserMale = user.gender === 'M' || !user.gender;
-                    const isPartnerMale = partner.gender === 'M';
+                    // Orden Hombre primero estricto
+                    const isM1 = user.gender === 'M';
+                    const isF1 = user.gender === 'F';
+                    const isM2 = partner.gender === 'M';
+                    const isF2 = partner.gender === 'F';
 
-                    const first = (isUserMale || (!isUserMale && !isPartnerMale)) ? user : partner;
+                    let first = user;
+                    if ((isM2 && !isM1) || (isF1 && !isF2)) {
+                        first = partner;
+                    }
                     const second = first === user ? partner : user;
 
                     addUserRow(first, false, true)
@@ -680,9 +691,9 @@ export default function AdminPage() {
                     tableColumn
                 ],
                 body: tableRows,
-                startY: 45,
+                startY: 40,
                 theme: 'grid',
-                styles: { fontSize: fontSize, cellPadding: 2, textColor: [0, 0, 0], valign: 'middle' },
+                styles: { fontSize: fontSize, cellPadding: 0.5, textColor: [0, 0, 0], valign: 'middle' },
                 headStyles: { fillColor: [0, 0, 0], textColor: 255, fontStyle: 'bold', halign: 'center' },
                 columnStyles: {
                     0: { cellWidth: 15, halign: 'center' },
@@ -1127,7 +1138,16 @@ export default function AdminPage() {
 
                                                 if (partner && !processedIds.has(partner.id)) {
                                                     // Determinar orden hombre-mujer si es posible
-                                                    const first = (user.gender === 'M' || (user.gender === 'F' && partner.gender !== 'M')) ? user : partner;
+                                                    // Orden Hombre primero estricto
+                                                    const isM1 = user.gender === 'M';
+                                                    const isF1 = user.gender === 'F';
+                                                    const isM2 = partner.gender === 'M';
+                                                    const isF2 = partner.gender === 'F';
+
+                                                    let first = user;
+                                                    if ((isM2 && !isM1) || (isF1 && !isF2)) {
+                                                        first = partner;
+                                                    }
                                                     const second = first === user ? partner : user;
 
                                                     finalRows.push(first);
@@ -1163,7 +1183,7 @@ export default function AdminPage() {
                                                                 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                                             }`}
                                                     >
-                                                        <td className={`py-4 px-3 md:px-8 text-slate-900 dark:text-white font-black text-[13px] sticky left-0 z-20 transition-all border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/20 dark:bg-blue-950/20' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
+                                                        <td className={`py-2 px-3 md:px-8 text-slate-900 dark:text-white font-black text-[13px] sticky left-0 z-20 transition-all border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/20 dark:bg-blue-950/20' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
                                                             }`}>
                                                             <div className="flex items-center gap-3 relative">
                                                                 {isPartOfCouple && (
@@ -1178,7 +1198,7 @@ export default function AdminPage() {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className={`py-4 px-4 text-center border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''
+                                                        <td className={`py-2 px-4 text-center border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''
                                                             }`}>
                                                             {user.communityNumber && (
                                                                 <span className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black border border-slate-200 dark:border-slate-700">
@@ -1257,19 +1277,35 @@ export default function AdminPage() {
                                     if (processedIds.has(user.id)) return null;
 
                                     const partner = user.partnerId ? Array.isArray(users) ? users.find(u => u.id === user.partnerId) : null : null;
-                                    if (partner) processedIds.add(partner.id);
+
+                                    let displayUser = user;
+                                    let displayPartner = partner;
+
+                                    if (partner) {
+                                        // Orden Hombre primero estricto
+                                        const isM1 = user.gender === 'M';
+                                        const isF1 = user.gender === 'F';
+                                        const isM2 = partner.gender === 'M';
+                                        const isF2 = partner.gender === 'F';
+
+                                        if ((isM2 && !isM1) || (isF1 && !isF2)) {
+                                            displayUser = partner;
+                                            displayPartner = user;
+                                        }
+                                        processedIds.add(partner.id);
+                                    }
                                     processedIds.add(user.id);
 
                                     return (
-                                        <div key={user.id} className={viewMode === 'grid'
-                                            ? `flex flex-col gap-6 p-6 rounded-[2.5rem] border-2 transition-all ${partner
+                                        <div key={displayUser.id} className={viewMode === 'grid'
+                                            ? `flex flex-col gap-6 p-6 rounded-[2.5rem] border-2 transition-all ${displayPartner
                                                 ? 'bg-blue-50/30 dark:bg-blue-900/5 border-blue-100 dark:border-blue-900/30 shadow-lg shadow-blue-500/5'
                                                 : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`
-                                            : `flex flex-col gap-4 p-5 rounded-3xl border transition-all ${partner
+                                            : `flex flex-col gap-4 p-3 rounded-2xl border transition-all ${displayPartner
                                                 ? 'bg-blue-50/30 dark:bg-blue-900/5 border-blue-200 dark:border-blue-800 shadow-sm'
                                                 : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
 
-                                            {partner && (
+                                            {displayPartner && (
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
                                                         <Heart size={14} fill="currentColor" />
@@ -1280,9 +1316,9 @@ export default function AdminPage() {
 
                                             <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-6 w-full" : "flex flex-col md:flex-row md:items-center flex-1 gap-6"}>
                                                 <div className="flex flex-col gap-4 flex-1 min-w-0">
-                                                    <MemberCard user={user} viewMode={viewMode} />
+                                                    <MemberCard user={displayUser} viewMode={viewMode} />
                                                     <MemberActions
-                                                        user={user}
+                                                        user={displayUser}
                                                         viewMode={viewMode}
                                                         downloadingId={downloadingId}
                                                         onShare={handleShareCard}
@@ -1291,14 +1327,14 @@ export default function AdminPage() {
                                                         onDelete={handleDeleteUser}
                                                     />
                                                 </div>
-                                                {partner && (
+                                                {displayPartner && (
                                                     <div className="flex flex-col gap-4 flex-1 min-w-0 relative">
                                                         {viewMode === 'list' && (
                                                             <div className="hidden md:block absolute -left-4 top-1/2 -translate-y-1/2 w-px h-12 bg-blue-200 dark:bg-blue-800" />
                                                         )}
-                                                        <MemberCard user={partner} viewMode={viewMode} isPartner />
+                                                        <MemberCard user={displayPartner} viewMode={viewMode} isPartner />
                                                         <MemberActions
-                                                            user={partner}
+                                                            user={displayPartner}
                                                             viewMode={viewMode}
                                                             downloadingId={downloadingId}
                                                             onShare={handleShareCard}
