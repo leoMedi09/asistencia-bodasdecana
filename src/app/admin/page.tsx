@@ -449,11 +449,21 @@ export default function AdminPage() {
             cardElement.style.transition = 'none'
 
             const canvas = await html2canvas(cardElement, {
-                scale: 2, // 2 is usually enough for cards and more stable
+                scale: 3,
                 useCORS: true,
                 logging: false,
                 backgroundColor: '#ffffff',
-                removeContainer: true
+                removeContainer: true,
+                onclone: (clonedDoc) => {
+                    const element = clonedDoc.getElementById(`card-${user.id}`)
+                    if (element && element.parentElement) {
+                        element.parentElement.style.display = 'block'
+                        element.parentElement.style.opacity = '1'
+                        element.parentElement.style.visibility = 'visible'
+                        element.parentElement.style.position = 'relative'
+                        element.parentElement.style.left = '0'
+                    }
+                }
             })
 
             const imgData = canvas.toDataURL('image/png')
@@ -493,6 +503,8 @@ export default function AdminPage() {
                         element.parentElement.style.display = 'block'
                         element.parentElement.style.opacity = '1'
                         element.parentElement.style.visibility = 'visible'
+                        element.parentElement.style.position = 'relative'
+                        element.parentElement.style.left = '0'
                     }
                 }
             })
@@ -1637,17 +1649,31 @@ function MemberActions({
         <div className={viewMode === 'list' ? "flex items-center gap-1.5 print:hidden ml-auto" : "flex flex-col gap-2 w-full"}>
             {!onlyEditDelete && (
                 <div className={viewMode === 'list' ? "flex items-center gap-1.5" : "flex flex-col gap-2"}>
-                    <button
-                        onClick={() => onShare(user)}
-                        disabled={downloadingId !== null}
-                        className={viewMode === 'list'
-                            ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95 disabled:opacity-50"
-                            : "flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/10 active:scale-95 transition-all disabled:opacity-50 w-full"}
-                        title="Compartir por WhatsApp"
-                    >
-                        {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
-                        {viewMode === 'grid' && "Enviar QR"}
-                    </button>
+                    <div className={viewMode === 'list' ? "flex items-center gap-1.5" : "grid grid-cols-2 gap-2"}>
+                        <button
+                            onClick={() => onShare(user)}
+                            disabled={downloadingId !== null}
+                            className={viewMode === 'list'
+                                ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all active:scale-95 disabled:opacity-50"
+                                : "flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/10 active:scale-95 transition-all disabled:opacity-50 w-full"}
+                            title="Compartir por WhatsApp"
+                        >
+                            {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Share2 size={18} />}
+                            {viewMode === 'grid' && "Enviar"}
+                        </button>
+
+                        <button
+                            onClick={() => onDownload(user)}
+                            disabled={downloadingId !== null}
+                            className={viewMode === 'list'
+                                ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95 disabled:opacity-50"
+                                : "flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200 active:scale-95 transition-all disabled:opacity-50 w-full"}
+                            title="Descargar Carnet"
+                        >
+                            {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+                            {viewMode === 'grid' && "Carnet"}
+                        </button>
+                    </div>
 
                     {!user.partnerId && (
                         <button
@@ -1664,20 +1690,7 @@ function MemberActions({
                 </div>
             )}
 
-            <div className={viewMode === 'list' ? "flex items-center gap-1.5" : "grid grid-cols-3 gap-2 w-full"}>
-                {!onlyEditDelete && (
-                    <button
-                        onClick={() => onDownload(user)}
-                        disabled={downloadingId !== null}
-                        className={viewMode === 'list'
-                            ? "p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95 disabled:opacity-50"
-                            : "flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl hover:bg-slate-200 active:scale-95 transition-all disabled:opacity-50"}
-                        title="Descargar Carnet"
-                    >
-                        {downloadingId === user.id ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
-                    </button>
-                )}
-
+            <div className={viewMode === 'list' ? "flex items-center gap-1.5" : "grid grid-cols-2 gap-2 w-full"}>
                 {(!hideEditDelete || onlyEditDelete) && (
                     <>
                         <button
