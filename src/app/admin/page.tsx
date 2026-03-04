@@ -1018,7 +1018,7 @@ export default function AdminPage() {
                             </div>
                         </div>
 
-                        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border-2 border-slate-100 dark:border-slate-800 shadow-2xl relative overflow-hidden group">
+                        <div className="bg-white dark:bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-10 border-2 border-slate-100 dark:border-slate-800 shadow-2xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
                             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8 relative z-10">
@@ -1056,7 +1056,7 @@ export default function AdminPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-end pt-1 md:pt-4">
+                                <div className="flex items-end pt-1 md:pt-4 gap-2">
                                     <button
                                         onClick={refreshAuditLogs}
                                         className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-all font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95"
@@ -1064,6 +1064,10 @@ export default function AdminPage() {
                                         <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
                                         <span>Actualizar</span>
                                     </button>
+                                    <div className="md:hidden flex items-center gap-1.5 px-3 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-tight whitespace-nowrap">
+                                        <ChevronRight size={12} className="animate-pulse text-blue-500" />
+                                        <span>Desliza</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1074,10 +1078,10 @@ export default function AdminPage() {
                                 <table className="w-full text-left border-separate border-spacing-0 min-w-[900px]">
                                     <thead>
                                         <tr>
-                                            <th className="py-6 px-4 md:px-8 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-40 border-b-2 border-slate-100 dark:border-slate-800 shadow-[4px_0_15px_-5px_rgba(0,0,0,0.1)] min-w-[140px] md:min-w-[250px]">
+                                            <th className="py-6 px-2 md:px-8 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-40 border-b-2 border-slate-100 dark:border-slate-800 shadow-[4px_0_12px_-2px_rgba(0,0,0,0.2)] max-w-[100px] md:max-w-none md:min-w-[250px]">
                                                 INTEGRANTE
                                             </th>
-                                            <th className="py-6 px-2 md:px-4 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center border-b-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 z-30">
+                                            <th className="py-6 px-1 md:px-4 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center border-b-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 z-30 min-w-[35px]">
                                                 COM.
                                             </th>
                                             {(() => {
@@ -1097,7 +1101,7 @@ export default function AdminPage() {
                                                         <th
                                                             key={i}
                                                             ref={isToday ? todayRef : null}
-                                                            className={`relative group py-6 px-2 md:px-3 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-center border-b-2 transition-all min-w-[65px] md:min-w-[75px] ${isToday
+                                                            className={`relative group py-6 px-1.5 md:px-3 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-center border-b-2 transition-all min-w-[55px] md:min-w-[75px] ${isToday
                                                                 ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-[inset_0_-2px_0_0_currentColor]'
                                                                 : 'text-slate-400 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
                                                                 }`}
@@ -1186,16 +1190,16 @@ export default function AdminPage() {
                                                                 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                                             }`}
                                                     >
-                                                        <td className={`py-4 px-4 md:px-8 text-slate-900 dark:text-white font-black text-[12px] md:text-[13px] sticky left-0 z-40 transition-all border-r border-slate-100 dark:border-slate-800 shadow-[4px_0_15px_-5px_rgba(0,0,0,0.1)] ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/40 dark:bg-blue-950/40' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
+                                                        <td className={`py-3 md:py-4 px-2 md:px-8 text-slate-900 dark:text-white font-black text-[10px] md:text-[13px] sticky left-0 z-40 transition-all border-r border-slate-100 dark:border-slate-800 shadow-[4px_0_12px_-2px_rgba(0,0,0,0.2)] max-w-[100px] md:max-w-none ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/40 dark:bg-blue-950/40' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
                                                             }`}>
-                                                            <div className="flex items-center gap-2 md:gap-3 relative">
+                                                            <div className="flex items-center gap-1.5 md:gap-3 relative overflow-hidden">
                                                                 {isPartOfCouple && (
-                                                                    <div className={`absolute -left-4 md:-left-8 w-1 md:w-1.5 transition-all bg-blue-500/50 ${isFirstOfCouple ? 'h-[100%] top-[50%] rounded-t-full' :
+                                                                    <div className={`absolute -left-3 md:-left-8 w-1 md:w-1.5 transition-all bg-blue-500/50 ${isFirstOfCouple ? 'h-[100%] top-[50%] rounded-t-full' :
                                                                         'h-[100%] bottom-[50%] rounded-b-full'
                                                                         }`} />
                                                                 )}
-                                                                <div className="flex flex-col min-w-0">
-                                                                    <span className="truncate uppercase tracking-tight">{user.fullName}</span>
+                                                                <div className="flex flex-col min-w-0 flex-1">
+                                                                    <span className="truncate block uppercase tracking-tight" title={user.fullName}>{user.fullName}</span>
                                                                     {isFirstOfCouple && <span className="text-[8px] text-blue-500 font-black uppercase mt-0.5 opacity-60 tracking-widest">{user.gender === 'F' ? 'Titular' : 'Titular'}</span>}
                                                                     {isSecondOfCouple && <span className="text-[8px] text-blue-500 font-black uppercase mt-0.5 opacity-60 tracking-widest">{user.gender === 'F' ? 'Cónyuge' : 'Cónyuge'}</span>}
                                                                 </div>
