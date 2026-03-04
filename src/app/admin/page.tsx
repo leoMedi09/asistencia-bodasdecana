@@ -605,8 +605,8 @@ export default function AdminPage() {
             // --- HEADER MEJORADO CON LOGO ---
             try {
                 // El usuario debe guardar el logo en public/logo.jpg
-                // Posición: Izquierda (15, 10), Tamaño: 30x30
-                doc.addImage('/logo.jpg', 'JPEG', 15, 10, 30, 30)
+                // Position: Left (15, 8), Size: 25x25 (Reduced to avoid clashing)
+                doc.addImage('/logo.jpg', 'JPEG', 15, 8, 25, 25)
             } catch (e) {
                 console.warn("Logo no encontrado en /public/logo.jpg")
             }
@@ -624,7 +624,7 @@ export default function AdminPage() {
             doc.setFontSize(18)
             doc.setFont('helvetica', 'bold')
             doc.setTextColor(0, 0, 0)
-            doc.text(`ASISTENCIA DE ${months[selectedMonth]}`, 148, 35, { align: 'center' })
+            doc.text(`ASISTENCIA DE ${months[selectedMonth]}`, 148, 38, { align: 'center' })
 
             const tableColumn = ["№", "NOMBRE Y APELLIDO", "N° COM", ...meetingDates.map(m => m.str)]
             // Reducir un poco el tamaño de fuente para que quepan las fechas si son muchas
@@ -724,7 +724,7 @@ export default function AdminPage() {
                     tableColumn
                 ],
                 body: tableRows,
-                startY: 40,
+                startY: 48,
                 theme: 'grid',
                 styles: { fontSize: fontSize, cellPadding: 2, textColor: [0, 0, 0], valign: 'middle' },
                 headStyles: { fillColor: [0, 0, 0], textColor: 255, fontStyle: 'bold', halign: 'center' },
