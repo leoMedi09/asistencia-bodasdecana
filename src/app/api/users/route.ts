@@ -93,19 +93,35 @@ export async function DELETE(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
     try {
-        const { id, fullName, communityNumber } = await request.json()
+        const { id, fullName, communityNumber, partnerId, partnerName } = await request.json()
 
         if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
 
-        const updatedUser = await prisma.user.update({
-            where: { id: parseInt(id) },
-            data: {
-                fullName,
-                communityNumber: communityNumber || null
-            },
+        const result = await prisma.$transaction(async (tx) => {
+            // Update primary user
+            const updatedUser = await tx.user.update({
+                where: { id: parseInt(id) },
+                data: {
+                    fullName,
+                    communityNumber: communityNumber || null
+                },
+            })
+
+            // Update partner if provided
+            if (partnerId && partnerName) {
+                await tx.user.update({
+                    where: { id: parseInt(partnerId) },
+                    data: {
+                        fullName: partnerName,
+                        communityNumber: communityNumber || null // Sync community number
+                    }
+                })
+            }
+
+            return updatedUser
         })
 
-        return NextResponse.json(updatedUser)
+        return NextResponse.json(result)
     } catch (error) {
         console.error('Error updating user:', error)
         return NextResponse.json({ error: 'Error updating user' }, { status: 500 })

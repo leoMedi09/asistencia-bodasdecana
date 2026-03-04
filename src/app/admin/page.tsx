@@ -39,6 +39,8 @@ export default function AdminPage() {
     const [selectedCommunity, setSelectedCommunity] = useState<string>('all')
     const [isCouple, setIsCouple] = useState(false)
     const [partnerName, setPartnerName] = useState('')
+    const [editPartnerName, setEditPartnerName] = useState('')
+    const [editPartnerId, setEditPartnerId] = useState<number | null>(null)
 
     // Reset page when filtering
     useEffect(() => {
@@ -198,7 +200,9 @@ export default function AdminPage() {
             body: JSON.stringify({
                 id: editingUser.id,
                 fullName: editName,
-                communityNumber: editCommunityNumber
+                communityNumber: editCommunityNumber,
+                partnerId: editPartnerId,
+                partnerName: editPartnerName
             }),
         })
 
@@ -215,6 +219,16 @@ export default function AdminPage() {
         setEditingUser(user)
         setEditName(user.fullName)
         setEditCommunityNumber(user.communityNumber || '')
+
+        // Cargar datos de pareja si existe
+        const partner = user.partnerId ? users.find(u => u.id === user.partnerId) : null
+        if (partner) {
+            setEditPartnerId(partner.id)
+            setEditPartnerName(partner.fullName)
+        } else {
+            setEditPartnerId(null)
+            setEditPartnerName('')
+        }
     }
 
     const handlePrint = () => {
@@ -1284,8 +1298,8 @@ export default function AdminPage() {
                 {/* Modal de Edición */}
                 {
                     editingUser && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
-                            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 border-2 border-slate-100 dark:border-slate-800 animate-in zoom-in duration-300 relative z-[210]">
+                        <div className="fixed inset-0 z-[200] flex items-start justify-center p-4 pt-16 md:pt-24 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto">
+                            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 border-2 border-slate-100 dark:border-slate-800 animate-in zoom-in duration-300 relative z-[210] mb-10">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-xl font-black text-slate-900 dark:text-white">Editar Miembro</h3>
                                     <button onClick={() => setEditingUser(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all">
@@ -1304,6 +1318,23 @@ export default function AdminPage() {
                                             required
                                         />
                                     </div>
+
+                                    {editPartnerId && (
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-2 pl-1">
+                                                <Heart size={12} className="text-pink-500" fill="currentColor" />
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Nombre de Pareja</label>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={editPartnerName}
+                                                onChange={(e) => setEditPartnerName(e.target.value)}
+                                                className="p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-pink-500/50 focus:ring-4 focus:ring-pink-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
+                                                required
+                                            />
+                                        </div>
+                                    )}
+
                                     <div className="flex flex-col gap-2">
                                         <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">N° Comunidad</label>
                                         <input
