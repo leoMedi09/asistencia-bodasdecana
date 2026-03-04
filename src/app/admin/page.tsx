@@ -693,7 +693,7 @@ export default function AdminPage() {
                 body: tableRows,
                 startY: 40,
                 theme: 'grid',
-                styles: { fontSize: fontSize, cellPadding: 0.5, textColor: [0, 0, 0], valign: 'middle' },
+                styles: { fontSize: fontSize, cellPadding: 2, textColor: [0, 0, 0], valign: 'middle' },
                 headStyles: { fillColor: [0, 0, 0], textColor: 255, fontStyle: 'bold', halign: 'center' },
                 columnStyles: {
                     0: { cellWidth: 15, halign: 'center' },
@@ -1183,7 +1183,7 @@ export default function AdminPage() {
                                                                 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                                             }`}
                                                     >
-                                                        <td className={`py-2 px-3 md:px-8 text-slate-900 dark:text-white font-black text-[13px] sticky left-0 z-20 transition-all border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/20 dark:bg-blue-950/20' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
+                                                        <td className={`py-3 px-3 md:px-8 text-slate-900 dark:text-white font-black text-[13px] sticky left-0 z-20 transition-all border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/20 dark:bg-blue-950/20' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
                                                             }`}>
                                                             <div className="flex items-center gap-3 relative">
                                                                 {isPartOfCouple && (
@@ -1198,7 +1198,7 @@ export default function AdminPage() {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className={`py-2 px-4 text-center border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''
+                                                        <td className={`py-3 px-4 text-center border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''
                                                             }`}>
                                                             {user.communityNumber && (
                                                                 <span className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black border border-slate-200 dark:border-slate-700">
@@ -1301,7 +1301,7 @@ export default function AdminPage() {
                                             ? `flex flex-col gap-6 p-6 rounded-[2.5rem] border-2 transition-all ${displayPartner
                                                 ? 'bg-blue-50/30 dark:bg-blue-900/5 border-blue-100 dark:border-blue-900/30 shadow-lg shadow-blue-500/5'
                                                 : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`
-                                            : `flex flex-col gap-4 p-3 rounded-2xl border transition-all ${displayPartner
+                                            : `flex flex-col gap-4 p-4 rounded-2xl border transition-all ${displayPartner
                                                 ? 'bg-blue-50/30 dark:bg-blue-900/5 border-blue-200 dark:border-blue-800 shadow-sm'
                                                 : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
 
