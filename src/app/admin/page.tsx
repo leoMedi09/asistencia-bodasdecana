@@ -489,7 +489,7 @@ export default function AdminPage() {
 
         setActiveAction({ id: user.id, type: 'share' })
         try {
-            await new Promise(resolve => setTimeout(resolve, 100))
+            // No Artificial delay to prevent user-gesture expiration
             cardElement.style.transition = 'none'
             const canvas = await html2canvas(cardElement, {
                 scale: 2, // Moderate scale for mobile compatibility
@@ -531,16 +531,25 @@ export default function AdminPage() {
                     // Success!
                     return
                 } catch (shareErr: any) {
-                    // If the user cancelled, don't show error
                     if (shareErr.name === 'AbortError') return
-
                     console.error('Share error:', shareErr)
-                    // If it failed for other reasons, use fallback
-                    triggerManualDownload(blob, fileName)
                 }
-            } else {
-                triggerManualDownload(blob, fileName)
             }
+
+            // Fallback: Copy to clipboard if supported
+            try {
+                if (navigator.clipboard) {
+                    const data = [new ClipboardItem({ [blob.type]: blob })];
+                    await navigator.clipboard.write(data);
+                    alert('¡Copiado! Tu navegador no abrió el menú de compartir por seguridad, pero ya tienes el carnet copiado. \n\nEntra a WhatsApp y dale a "Pegar".');
+                    return;
+                }
+            } catch (clipErr) {
+                console.error('Clipboard error:', clipErr);
+            }
+
+            // Final fallback: Manual download
+            triggerManualDownload(blob, fileName)
         } catch (error) {
             console.error('Error sharing card:', error)
             alert('Error al generar la imagen.')
@@ -558,7 +567,7 @@ export default function AdminPage() {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
         if (isMobile) {
-            alert('¡Carnet descargado! \n\nTu navegador no permite abrir el menú de WhatsApp automáticamente por seguridad. Pero no te preocupes, el carnet ya está en tu galería. Solo tienes que entrar a WhatsApp y enviarlo como una foto normal.')
+            alert('¡Carnet descargado! \n\nNo se pudo abrir WhatsApp automáticamente ni copiar al portapapeles por seguridad. \n\nPero el carnet ya está en tu galería. Solo tienes que entrar a WhatsApp y elegirlo como una foto normal.')
         } else {
             if (confirm('Tu navegador de PC no admite abrir el menú de compartir directamente.\n\nEl carnet se ha descargado. ¿Quieres abrir WhatsApp Web para enviarlo?')) {
                 window.open('https://web.whatsapp.com/', '_blank');
