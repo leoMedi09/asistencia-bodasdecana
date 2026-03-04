@@ -518,7 +518,7 @@ export default function AdminPage() {
                 return
             }
 
-            const fileName = `carnet-${user.id}.png`
+            const fileName = `carnet.png`
             const file = new File([blob], fileName, { type: 'image/png' })
 
             // On some mobile browsers, we must call navigator.share promptly
@@ -526,8 +526,7 @@ export default function AdminPage() {
             if (navigator.share) {
                 try {
                     await navigator.share({
-                        files: [file],
-                        title: 'Carnet',
+                        files: [file]
                     })
                     // Success!
                     return
@@ -556,11 +555,10 @@ export default function AdminPage() {
         link.download = fileName
         link.click()
 
-        // Detect platform
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
         if (isMobile) {
-            alert('¡Imagen generada! Tu carnet se ha descargado a la galería. \n\nAhora ya puedes adjuntarlo manualmente en WhatsApp.')
+            alert('¡Carnet descargado! \n\nTu navegador no permite abrir el menú de WhatsApp automáticamente por seguridad. Pero no te preocupes, el carnet ya está en tu galería. Solo tienes que entrar a WhatsApp y enviarlo como una foto normal.')
         } else {
             if (confirm('Tu navegador de PC no admite abrir el menú de compartir directamente.\n\nEl carnet se ha descargado. ¿Quieres abrir WhatsApp Web para enviarlo?')) {
                 window.open('https://web.whatsapp.com/', '_blank');
