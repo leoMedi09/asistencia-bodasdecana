@@ -692,8 +692,8 @@ export default function AdminPage() {
     if (!isMounted) return null;
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-3 md:p-6 lg:p-8 animate-fade-in">
-            <div className="max-w-[1400px] mx-auto">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-3 md:p-6 lg:p-8">
+            <div className="max-w-[1400px] mx-auto animate-fade-in">
                 <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-10 print:hidden text-center md:text-left">
                     <div className="flex flex-col gap-3">
                         <Link href="/" className="p-2.5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl text-slate-500 hover:text-blue-600 transition-all active:scale-95 group w-fit -ml-1 mx-auto md:ml-0">
@@ -1295,86 +1295,85 @@ export default function AdminPage() {
                         </div>
                     )}
 
-                {/* Modal de Edición */}
-                {
-                    editingUser && (
-                        <div className="fixed inset-0 z-[200] flex items-start justify-center p-4 pt-16 md:pt-24 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto">
-                            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 border-2 border-slate-100 dark:border-slate-800 animate-in zoom-in duration-300 relative z-[210] mb-10">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white">Editar Miembro</h3>
-                                    <button onClick={() => setEditingUser(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all">
-                                        <X size={20} />
-                                    </button>
-                                </div>
-
-                                <form onSubmit={handleEditUser} className="flex flex-col gap-5">
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Nombre Completo</label>
-                                        <input
-                                            type="text"
-                                            value={editName}
-                                            onChange={(e) => setEditName(e.target.value)}
-                                            className="p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
-                                            required
-                                        />
-                                    </div>
-
-                                    {editPartnerId && (
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex items-center gap-2 pl-1">
-                                                <Heart size={12} className="text-pink-500" fill="currentColor" />
-                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Nombre de Pareja</label>
-                                            </div>
-                                            <input
-                                                type="text"
-                                                value={editPartnerName}
-                                                onChange={(e) => setEditPartnerName(e.target.value)}
-                                                className="p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-pink-500/50 focus:ring-4 focus:ring-pink-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
-                                                required
-                                            />
-                                        </div>
-                                    )}
-
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">N° Comunidad</label>
-                                        <input
-                                            type="text"
-                                            value={editCommunityNumber}
-                                            onChange={(e) => setEditCommunityNumber(e.target.value)}
-                                            className="p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
-                                        />
-                                    </div>
-
-                                    <div className="flex gap-3 mt-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => setEditingUser(null)}
-                                            className="flex-1 py-4 rounded-2xl font-black bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all uppercase text-xs tracking-widest"
-                                        >
-                                            Cancelar
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            disabled={loading}
-                                            className="flex-3 bg-blue-600 text-white py-4 px-8 rounded-2xl font-black hover:bg-blue-700 transition-all shadow-xl shadow-blue-900/20 flex items-center justify-center gap-2 disabled:opacity-50"
-                                        >
-                                            {loading ? <Loader2 className="animate-spin" size={20} /> : <Check size={20} />}
-                                            GUARDAR CAMBIOS
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    )
-                }
-
                 {
                     activeTab === 'members' && users.length === 0 && (
                         <p className="text-center text-gray-500 mt-10">No hay miembros registrados aún.</p>
                     )
                 }
-            </div >
+            </div>
 
+            {/* Modal de Edición */}
+            {
+                editingUser && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto">
+                        <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 md:p-10 border-2 border-slate-100 dark:border-slate-800 animate-in zoom-in duration-300 relative z-[210] my-8">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white">Editar Miembro</h3>
+                                <button onClick={() => setEditingUser(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleEditUser} className="flex flex-col gap-5">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">Nombre Completo</label>
+                                    <input
+                                        type="text"
+                                        value={editName}
+                                        onChange={(e) => setEditName(e.target.value)}
+                                        className="p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
+                                        required
+                                    />
+                                </div>
+
+                                {editPartnerId && (
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex items-center gap-2 pl-1">
+                                            <Heart size={12} className="text-pink-500" fill="currentColor" />
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Nombre de Pareja</label>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={editPartnerName}
+                                            onChange={(e) => setEditPartnerName(e.target.value)}
+                                            className="p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-pink-500/50 focus:ring-4 focus:ring-pink-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
+                                            required
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">N° Comunidad</label>
+                                    <input
+                                        type="text"
+                                        value={editCommunityNumber}
+                                        onChange={(e) => setEditCommunityNumber(e.target.value)}
+                                        className="p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
+                                    />
+                                </div>
+
+                                <div className="flex flex-wrap sm:flex-nowrap gap-3 mt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingUser(null)}
+                                        className="flex-1 py-4 rounded-2xl font-black bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all uppercase text-[10px] tracking-widest"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="flex-[2] sm:flex-[3] bg-blue-600 text-white py-4 px-6 sm:px-8 rounded-2xl font-black hover:bg-blue-700 transition-all shadow-xl shadow-blue-900/20 flex items-center justify-center gap-2 disabled:opacity-50 text-[10px] sm:text-xs tracking-widest"
+                                    >
+                                        {loading ? <Loader2 className="animate-spin" size={20} /> : <Check size={20} />}
+                                        GUARDAR CAMBIOS
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
             <style jsx global>{`
         @media print {
           body { visibility: hidden; }
