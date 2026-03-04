@@ -18,7 +18,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
     try {
-        const { fullName, communityNumber, isCouple, partnerName } = await request.json()
+        const { fullName, communityNumber, isCouple, partnerName, gender } = await request.json()
+        const userGender = gender || 'M'
 
         if (isCouple && partnerName) {
             const result = await prisma.$transaction(async (tx) => {
@@ -26,7 +27,8 @@ export async function POST(request: NextRequest) {
                     data: {
                         fullName,
                         communityNumber: communityNumber || null,
-                        qrCode: randomUUID()
+                        qrCode: randomUUID(),
+                        gender: userGender
                     }
                 })
 
@@ -35,7 +37,8 @@ export async function POST(request: NextRequest) {
                         fullName: partnerName,
                         communityNumber: communityNumber || null,
                         qrCode: randomUUID(),
-                        partnerId: user1.id
+                        partnerId: user1.id,
+                        gender: userGender === 'M' ? 'F' : 'M'
                     }
                 })
 
@@ -54,7 +57,8 @@ export async function POST(request: NextRequest) {
             data: {
                 fullName,
                 communityNumber: communityNumber || null,
-                qrCode: randomUUID()
+                qrCode: randomUUID(),
+                gender: userGender
             },
         })
         return NextResponse.json(user)
@@ -91,7 +95,7 @@ export async function DELETE(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
     try {
-        const { id, fullName, communityNumber, partnerId, partnerName } = await request.json()
+        const { id, fullName, communityNumber, partnerId, partnerName, gender, partnerGender } = await request.json()
         if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
 
         const result = await prisma.$transaction(async (tx) => {
@@ -99,16 +103,18 @@ export async function PATCH(request: NextRequest) {
                 where: { id: parseInt(id) },
                 data: {
                     fullName,
-                    communityNumber: communityNumber || null
+                    communityNumber: communityNumber || null,
+                    gender: gender || undefined
                 },
             })
 
-            if (partnerId && partnerName) {
+            if (partnerId && (partnerName || partnerGender)) {
                 await tx.user.update({
                     where: { id: parseInt(partnerId) },
                     data: {
-                        fullName: partnerName,
-                        communityNumber: communityNumber || null
+                        fullName: partnerName || undefined,
+                        communityNumber: communityNumber || undefined,
+                        gender: partnerGender || undefined
                     }
                 })
             }

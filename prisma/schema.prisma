@@ -14,6 +14,7 @@ model User {
   communityNumber String?
   qrCode          String   @unique @default(uuid())
   isActive        Boolean  @default(true)
+  gender          String?  @default("M") // "M" o "F"
   
   // Relación para parejas (necesaria para el reporte)
   partnerId       Int?     @unique

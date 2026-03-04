@@ -20,6 +20,7 @@ interface User {
     createdAt: string
     partnerId?: number | null
     partner?: User | null
+    gender?: 'M' | 'F'
 }
 
 export default function AdminPage() {
@@ -41,6 +42,9 @@ export default function AdminPage() {
     const [partnerName, setPartnerName] = useState('')
     const [editPartnerName, setEditPartnerName] = useState('')
     const [editPartnerId, setEditPartnerId] = useState<number | null>(null)
+    const [newGender, setNewGender] = useState<'M' | 'F'>('M')
+    const [editGender, setEditGender] = useState<'M' | 'F'>('M')
+    const [editPartnerGender, setEditPartnerGender] = useState<'M' | 'F'>('F')
 
     // Reset page when filtering
     useEffect(() => {
@@ -122,13 +126,15 @@ export default function AdminPage() {
                 fullName: newName,
                 communityNumber: newCommunityNumber,
                 isCouple,
-                partnerName: isCouple ? partnerName : undefined
+                partnerName: isCouple ? partnerName : undefined,
+                gender: newGender
             }),
         })
         setNewName('')
         setNewCommunityNumber('')
         setPartnerName('')
         setIsCouple(false)
+        setNewGender('M')
         setLoading(false)
         fetchUsers()
     }
@@ -202,7 +208,9 @@ export default function AdminPage() {
                 fullName: editName,
                 communityNumber: editCommunityNumber,
                 partnerId: editPartnerId,
-                partnerName: editPartnerName
+                partnerName: editPartnerName,
+                gender: editGender,
+                partnerGender: editPartnerGender
             }),
         })
 
@@ -219,15 +227,18 @@ export default function AdminPage() {
         setEditingUser(user)
         setEditName(user.fullName)
         setEditCommunityNumber(user.communityNumber || '')
+        setEditGender(user.gender || 'M')
 
         // Cargar datos de pareja si existe
         const partner = user.partnerId ? users.find(u => u.id === user.partnerId) : null
         if (partner) {
             setEditPartnerId(partner.id)
             setEditPartnerName(partner.fullName)
+            setEditPartnerGender(partner.gender || (user.gender === 'M' ? 'F' : 'M'))
         } else {
             setEditPartnerId(null)
             setEditPartnerName('')
+            setEditPartnerGender('F')
         }
     }
 
@@ -308,11 +319,11 @@ export default function AdminPage() {
                 }
 
                 const partner = user.partnerId ? allUsers.find(u => u.id === user.partnerId) : null
-                entityCounter++ // Aumentar contador por cada entidad (pareja o individual)
 
                 // Función para añadir una fila de usuario con indicador de pareja
                 const addUserRow = (u: User, isPartnerRow = false) => {
-                    const name = isPartnerRow ? `   -> ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase()
+                    // Remover flecha -> y usar indentación para el cónyuge
+                    const name = isPartnerRow ? `   ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase()
                     const row = [
                         entityCounter.toString(),
                         name,
@@ -340,10 +351,20 @@ export default function AdminPage() {
                     processedIds.add(u.id)
                 }
 
-                // Añadir usuario (y su pareja si existe para que salgan seguidos)
-                addUserRow(user)
                 if (partner && !processedIds.has(partner.id)) {
-                    addUserRow(partner, true)
+                    entityCounter++
+                    // Orden Hombre primero
+                    const isUserMale = user.gender === 'M' || !user.gender;
+                    const isPartnerMale = partner.gender === 'M';
+
+                    const first = (isUserMale || (!isUserMale && !isPartnerMale)) ? user : partner;
+                    const second = first === user ? partner : user;
+
+                    addUserRow(first, false)
+                    addUserRow(second, true)
+                } else if (!processedIds.has(user.id)) {
+                    entityCounter++
+                    addUserRow(user)
                 }
             })
 
@@ -593,7 +614,6 @@ export default function AdminPage() {
                 }
 
                 const partner = user.partnerId ? allUsers.find(u => u.id === user.partnerId) : null
-                entityCounter++
 
                 // Función para añadir una fila de usuario
                 const addUserRow = (u: User, isPartnerRow: boolean, hasPartner: boolean) => {
@@ -601,14 +621,15 @@ export default function AdminPage() {
 
                     // Columna № con rowSpan para parejas
                     if (!isPartnerRow) {
-                        if (hasPartner) {
-                            row.push({ content: entityCounter.toString(), rowSpan: 2, styles: { halign: 'center', valign: 'middle' } })
-                        } else {
-                            row.push(entityCounter.toString())
-                        }
+                        row.push({
+                            content: entityCounter.toString(),
+                            rowSpan: hasPartner ? 2 : 1,
+                            styles: { halign: 'center', valign: 'middle', fontStyle: 'bold' }
+                        })
                     }
 
-                    row.push(isPartnerRow ? `   -> ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase())
+                    // Remover flecha -> y usar indentación para el cónyuge
+                    row.push(isPartnerRow ? `   ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase())
                     row.push(u.communityNumber || '-')
 
                     const today = new Date()
@@ -633,11 +654,20 @@ export default function AdminPage() {
                     processedIds.add(u.id)
                 }
 
-                // Añadir usuario y su pareja (para que salgan seguidos)
-                const hasPartner = !!(partner && !processedIds.has(partner?.id));
-                addUserRow(user, false, hasPartner)
                 if (partner && !processedIds.has(partner.id)) {
-                    addUserRow(partner, true, false)
+                    entityCounter++
+                    // Orden Hombre primero
+                    const isUserMale = user.gender === 'M' || !user.gender;
+                    const isPartnerMale = partner.gender === 'M';
+
+                    const first = (isUserMale || (!isUserMale && !isPartnerMale)) ? user : partner;
+                    const second = first === user ? partner : user;
+
+                    addUserRow(first, false, true)
+                    addUserRow(second, true, false)
+                } else if (!processedIds.has(user.id)) {
+                    entityCounter++
+                    addUserRow(user, false, false)
                 }
             })
 
@@ -652,10 +682,10 @@ export default function AdminPage() {
                 body: tableRows,
                 startY: 45,
                 theme: 'grid',
-                styles: { fontSize: fontSize, cellPadding: 2, textColor: [0, 0, 0] },
+                styles: { fontSize: fontSize, cellPadding: 2, textColor: [0, 0, 0], valign: 'middle' },
                 headStyles: { fillColor: [0, 0, 0], textColor: 255, fontStyle: 'bold', halign: 'center' },
                 columnStyles: {
-                    0: { cellWidth: 15 },
+                    0: { cellWidth: 15, halign: 'center' },
                     1: { cellWidth: 'auto', fontStyle: 'bold' },
                     2: { cellWidth: 15, halign: 'center' }
                 },
@@ -861,14 +891,36 @@ export default function AdminPage() {
                                         </div>
                                     )}
 
-                                    <div className="md:col-span-2 flex flex-col gap-2">
+                                    <div className="md:col-span-1 flex flex-col gap-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 text-center">Sexo</label>
+                                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl h-[60px]">
+                                            <button
+                                                type="button"
+                                                onClick={() => setNewGender('M')}
+                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${newGender === 'M' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}
+                                                title="Hombre"
+                                            >
+                                                <span className="font-black text-sm">M</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setNewGender('F')}
+                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${newGender === 'F' ? 'bg-pink-600 text-white shadow-md' : 'text-slate-500'}`}
+                                                title="Mujer"
+                                            >
+                                                <span className="font-black text-sm">F</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="md:col-span-1 flex flex-col gap-2 text-center">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Comunidad</label>
                                         <input
                                             type="text"
                                             value={newCommunityNumber}
                                             onChange={(e) => setNewCommunityNumber(e.target.value)}
                                             placeholder="N°"
-                                            className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-green-500/50 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white text-center"
+                                            className="w-full p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-green-500/50 focus:ring-4 focus:ring-green-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white text-center h-[60px]"
                                             required
                                         />
                                     </div>
@@ -1072,11 +1124,19 @@ export default function AdminPage() {
                                             sortedUsers.forEach(user => {
                                                 if (processedIds.has(user.id)) return;
                                                 const partner = user.partnerId ? sortedUsers.find(u => u.id === user.partnerId) : null;
-                                                finalRows.push(user);
-                                                processedIds.add(user.id);
+
                                                 if (partner && !processedIds.has(partner.id)) {
-                                                    finalRows.push(partner);
+                                                    // Determinar orden hombre-mujer si es posible
+                                                    const first = (user.gender === 'M' || (user.gender === 'F' && partner.gender !== 'M')) ? user : partner;
+                                                    const second = first === user ? partner : user;
+
+                                                    finalRows.push(first);
+                                                    finalRows.push(second);
+                                                    processedIds.add(user.id);
                                                     processedIds.add(partner.id);
+                                                } else if (!processedIds.has(user.id)) {
+                                                    finalRows.push(user);
+                                                    processedIds.add(user.id);
                                                 }
                                             });
 
@@ -1113,8 +1173,8 @@ export default function AdminPage() {
                                                                 )}
                                                                 <div className="flex flex-col min-w-0">
                                                                     <span className="truncate uppercase tracking-tight">{user.fullName}</span>
-                                                                    {isFirstOfCouple && <span className="text-[8px] text-blue-500 font-black uppercase mt-0.5 opacity-60 tracking-widest">Titular</span>}
-                                                                    {isSecondOfCouple && <span className="text-[8px] text-blue-500 font-black uppercase mt-0.5 opacity-60 tracking-widest">Cónyuge</span>}
+                                                                    {isFirstOfCouple && <span className="text-[8px] text-blue-500 font-black uppercase mt-0.5 opacity-60 tracking-widest">{user.gender === 'F' ? 'Titular' : 'Titular'}</span>}
+                                                                    {isSecondOfCouple && <span className="text-[8px] text-blue-500 font-black uppercase mt-0.5 opacity-60 tracking-widest">{user.gender === 'F' ? 'Cónyuge' : 'Cónyuge'}</span>}
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -1386,15 +1446,58 @@ export default function AdminPage() {
                                     </div>
                                 )}
 
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">N° Comunidad</label>
-                                    <input
-                                        type="text"
-                                        value={editCommunityNumber}
-                                        onChange={(e) => setEditCommunityNumber(e.target.value)}
-                                        className="p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1">N° Comunidad</label>
+                                        <input
+                                            type="text"
+                                            value={editCommunityNumber}
+                                            onChange={(e) => setEditCommunityNumber(e.target.value)}
+                                            className="p-4 rounded-2xl border-2 border-slate-100 dark:bg-slate-950 dark:border-slate-800 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-slate-900 dark:text-white"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1 text-center">Sexo Titular</label>
+                                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl h-full">
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditGender('M')}
+                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${editGender === 'M' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}
+                                            >
+                                                <span className="font-black text-xs tracking-widest">M</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditGender('F')}
+                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${editGender === 'F' ? 'bg-pink-600 text-white shadow-md' : 'text-slate-500'}`}
+                                            >
+                                                <span className="font-black text-xs tracking-widest">F</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
+
+                                {editPartnerId && (
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest pl-1 text-center">Sexo Cónyuge</label>
+                                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl h-14">
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditPartnerGender('M')}
+                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${editPartnerGender === 'M' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}
+                                            >
+                                                <span className="font-black text-xs tracking-widest">M</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditPartnerGender('F')}
+                                                className={`flex-1 flex items-center justify-center rounded-xl transition-all ${editPartnerGender === 'F' ? 'bg-pink-600 text-white shadow-md' : 'text-slate-500'}`}
+                                            >
+                                                <span className="font-black text-xs tracking-widest">F</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="flex flex-wrap sm:flex-nowrap gap-3 mt-4">
                                     <button
