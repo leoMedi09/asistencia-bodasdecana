@@ -528,7 +528,7 @@ export default function AdminPage() {
             // We try to use it if available, but wrap it in a try-catch for better resilience.
             const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
 
-            if (navigator.share && (canShareFiles || !navigator.canShare)) {
+            if (navigator.share && canShareFiles) {
                 try {
                     await navigator.share({
                         files: [file],
@@ -557,7 +557,17 @@ export default function AdminPage() {
         link.href = URL.createObjectURL(blob)
         link.download = fileName
         link.click()
-        alert('Tu navegador no permite compartir archivos directamente. El carnet se ha descargado; puedes enviarlo manualmente por WhatsApp.')
+
+        // Check platform for better instruction
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        if (isMobile) {
+            alert('El carnet se ha descargado. Puedes enviarlo manualmente por WhatsApp adjuntando la imagen desde tu galería.')
+        } else {
+            if (confirm('Tu navegador de escritorio no soporta el menú de compartir directamente.\n\nEl carnet se ha descargado a tu PC. ¿Quieres abrir WhatsApp Web para adjuntarlo manualmente?')) {
+                window.open('https://web.whatsapp.com/', '_blank');
+            }
+        }
     }
 
 
