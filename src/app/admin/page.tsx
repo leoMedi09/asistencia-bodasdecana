@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
 import Link from 'next/link'
-import { ArrowLeft, UserPlus, Printer, Download, FileText, Loader2, Share2, Table, Trash2, Search, Pencil, LayoutGrid, List, X, Check, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, UserPlus, Printer, Download, FileText, Loader2, Share2, Table, Trash2, Search, Pencil, LayoutGrid, List, X, Check, RefreshCw, ChevronLeft, ChevronRight, Heart } from 'lucide-react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import * as XLSX from 'xlsx'
@@ -293,11 +293,12 @@ export default function AdminPage() {
 
                 const partner = user.partnerId ? allUsers.find(u => u.id === user.partnerId) : null
 
-                // Función para añadir una fila de usuario
-                const addUserRow = (u: User) => {
+                // Función para añadir una fila de usuario con indicador de pareja
+                const addUserRow = (u: User, isPartnerRow = false) => {
+                    const name = isPartnerRow ? `   ↳ ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase()
                     const row = [
                         u.id.toString().padStart(4, '0'),
-                        u.fullName.toUpperCase(),
+                        name,
                         u.communityNumber || '-'
                     ]
 
@@ -325,7 +326,7 @@ export default function AdminPage() {
                 // Añadir usuario (y su pareja si existe para que salgan seguidos)
                 addUserRow(user)
                 if (partner && !processedIds.has(partner.id)) {
-                    addUserRow(partner)
+                    addUserRow(partner, true)
                 }
             })
 
@@ -573,10 +574,10 @@ export default function AdminPage() {
                 const partner = user.partnerId ? allUsers.find(u => u.id === user.partnerId) : null
 
                 // Función para añadir una fila de usuario
-                const addUserRow = (u: User) => {
+                const addUserRow = (u: User, isPartnerRow: boolean) => {
                     const row = [
                         u.id.toString().padStart(4, '0'),
-                        u.fullName.toUpperCase(),
+                        isPartnerRow ? `   ↳ ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase(),
                         u.communityNumber || '-'
                     ]
 
@@ -597,14 +598,17 @@ export default function AdminPage() {
                             row.push('') // Future date
                         }
                     })
+
+                    // Añadimos la fila a tableRows. 
+                    // El estilo se aplicará visualmente mediante la sangría "↳".
                     tableRows.push(row)
                     processedIds.add(u.id)
                 }
 
                 // Añadir usuario y su pareja (para que salgan seguidos)
-                addUserRow(user)
+                addUserRow(user, false)
                 if (partner && !processedIds.has(partner.id)) {
-                    addUserRow(partner)
+                    addUserRow(partner, true)
                 }
             })
 
@@ -1018,7 +1022,7 @@ export default function AdminPage() {
                                                 }
                                             });
 
-                                            return finalRows.map((user) => {
+                                            return finalRows.map((user, rowIndex) => {
                                                 const year = 2026;
                                                 const daysInMonth = new Date(year, selectedMonth + 1, 0).getDate();
                                                 const dates = [];
@@ -1029,11 +1033,18 @@ export default function AdminPage() {
                                                     }
                                                 }
 
+                                                const isPartOfCouple = !!user.partnerId;
+                                                const isFirstOfCouple = isPartOfCouple && (rowIndex === 0 || finalRows[rowIndex - 1].partnerId !== user.id);
+                                                const isSecondOfCouple = isPartOfCouple && !isFirstOfCouple;
+
                                                 return (
-                                                    <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
-                                                        <td className="py-4 px-3 md:px-6 text-slate-900 dark:text-white font-black text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 transition-colors border-r border-slate-100 dark:border-slate-800 z-20 shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)]">
-                                                            <div className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-[200px]" title={user.fullName}>
-                                                                {user.fullName}
+                                                    <tr key={user.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group ${isPartOfCouple ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''}`}>
+                                                        <td className={`py-4 px-3 md:px-6 text-slate-900 dark:text-white font-black text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 transition-colors border-r border-slate-100 dark:border-slate-800 z-20 shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)] ${isFirstOfCouple ? 'border-l-4 border-l-blue-400' : isSecondOfCouple ? 'border-l-4 border-l-blue-400' : ''}`}>
+                                                            <div className="flex items-center gap-2">
+                                                                {isSecondOfCouple && <span className="text-blue-400 font-bold ml-1">↳</span>}
+                                                                <div className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-[200px]" title={user.fullName}>
+                                                                    {user.fullName}
+                                                                </div>
                                                             </div>
                                                         </td>
                                                         <td className="py-4 px-4 text-center border-r border-slate-100/50 dark:border-slate-800/50">
@@ -1126,9 +1137,25 @@ export default function AdminPage() {
                                     processedIds.add(user.id);
 
                                     return (
-                                        <div key={user.id} className={viewMode === 'grid' ? "flex flex-col gap-6" : "flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 hover:border-blue-300 transition-all gap-4"}>
-                                            <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-4 w-full" : "flex flex-col md:flex-row md:items-center flex-1 gap-4"}>
-                                                <div className="flex flex-col gap-3 flex-1 min-w-0">
+                                        <div key={user.id} className={viewMode === 'grid'
+                                            ? `flex flex-col gap-6 p-6 rounded-[2.5rem] border-2 transition-all ${partner
+                                                ? 'bg-blue-50/30 dark:bg-blue-900/5 border-blue-100 dark:border-blue-900/30 shadow-lg shadow-blue-500/5'
+                                                : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`
+                                            : `flex flex-col gap-4 p-5 rounded-3xl border transition-all ${partner
+                                                ? 'bg-blue-50/30 dark:bg-blue-900/5 border-blue-200 dark:border-blue-800 shadow-sm'
+                                                : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
+
+                                            {partner && (
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                                        <Heart size={14} fill="currentColor" />
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">Pareja Vinculada</span>
+                                                </div>
+                                            )}
+
+                                            <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 gap-6 w-full" : "flex flex-col md:flex-row md:items-center flex-1 gap-6"}>
+                                                <div className="flex flex-col gap-4 flex-1 min-w-0">
                                                     <MemberCard user={user} viewMode={viewMode} />
                                                     <MemberActions
                                                         user={user}
@@ -1141,7 +1168,10 @@ export default function AdminPage() {
                                                     />
                                                 </div>
                                                 {partner && (
-                                                    <div className="flex flex-col gap-3 flex-1 min-w-0">
+                                                    <div className="flex flex-col gap-4 flex-1 min-w-0 relative">
+                                                        {viewMode === 'list' && (
+                                                            <div className="hidden md:block absolute -left-4 top-1/2 -translate-y-1/2 w-px h-12 bg-blue-200 dark:bg-blue-800" />
+                                                        )}
                                                         <MemberCard user={partner} viewMode={viewMode} isPartner />
                                                         <MemberActions
                                                             user={partner}
@@ -1155,12 +1185,6 @@ export default function AdminPage() {
                                                     </div>
                                                 )}
                                             </div>
-
-                                            {partner && viewMode === 'list' && (
-                                                <div className="flex items-center gap-2 px-3 py-1 bg-pink-50 dark:bg-pink-900/10 text-pink-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-pink-100 dark:border-pink-900/30">
-                                                    PAREJA ENLAZADA
-                                                </div>
-                                            )}
                                         </div>
                                     );
                                 }).filter(Boolean);
