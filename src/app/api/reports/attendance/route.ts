@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
     try {
         const attendances = await prisma.attendance.findMany({

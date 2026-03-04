@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 export async function DELETE(request: Request) {
     try {
         const { searchParams } = new URL(request.url)

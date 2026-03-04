@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: Request) {
     try {
         const { qrCode, date } = await request.json()
