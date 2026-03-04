@@ -312,7 +312,7 @@ export default function AdminPage() {
 
                 // Función para añadir una fila de usuario con indicador de pareja
                 const addUserRow = (u: User, isPartnerRow = false) => {
-                    const name = isPartnerRow ? `   ↳ ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase()
+                    const name = isPartnerRow ? `   -> ${u.fullName.toUpperCase()}` : u.fullName.toUpperCase()
                     const row = [
                         entityCounter.toString(),
                         name,
@@ -908,13 +908,35 @@ export default function AdminPage() {
                         </div>
                     </>
                 ) : (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border-2 border-slate-100 dark:border-slate-800 shadow-2xl mb-10">
-                            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8 bg-slate-50/50 dark:bg-slate-800/30 p-4 md:p-6 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800">
-                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+                        {/* Resumen de Auditoría */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center text-center group hover:border-emerald-500/30 transition-all">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Presentes Hoy</span>
+                                <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                                    {auditLogs.filter(log => log.Fecha === format(new Date(), 'dd/MM/yyyy')).length}
+                                </span>
+                            </div>
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center text-center group hover:border-rose-500/30 transition-all">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Faltas Hoy</span>
+                                <span className="text-3xl font-black text-rose-600 dark:text-rose-400">
+                                    {users.length - auditLogs.filter(log => log.Fecha === format(new Date(), 'dd/MM/yyyy')).length}
+                                </span>
+                            </div>
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center text-center group hover:border-blue-500/30 transition-all">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Miembros</span>
+                                <span className="text-3xl font-black text-blue-600 dark:text-blue-400">{users.length}</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 md:p-10 border-2 border-slate-100 dark:border-slate-800 shadow-2xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+
+                            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8 relative z-10">
+                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-1">
                                     <div className="flex flex-col gap-1.5">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Periodo:</label>
-                                        <div className="relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all hover:border-blue-400">
+                                        <div className="relative bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:border-blue-400 group">
                                             <select
                                                 value={selectedMonth}
                                                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
@@ -925,15 +947,13 @@ export default function AdminPage() {
                                                 ))}
                                             </select>
                                             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-blue-500">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                                </svg>
+                                                <ChevronRight className="rotate-90" size={16} strokeWidth={3} />
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="flex flex-col gap-1.5 flex-1">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Buscar Miembro:</label>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Buscar en Auditoría:</label>
                                         <div className="relative group">
                                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
                                             <input
@@ -941,7 +961,7 @@ export default function AdminPage() {
                                                 placeholder="Nombre o comunidad..."
                                                 value={auditSearch}
                                                 onChange={(e) => setAuditSearch(e.target.value)}
-                                                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 outline-none text-sm font-bold text-slate-900 dark:text-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all"
+                                                className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 outline-none text-sm font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all"
                                             />
                                         </div>
                                     </div>
@@ -950,9 +970,9 @@ export default function AdminPage() {
                                 <div className="flex items-end pt-1 md:pt-4">
                                     <button
                                         onClick={refreshAuditLogs}
-                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all font-bold text-sm shadow-sm active:scale-95"
+                                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-all font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95"
                                     >
-                                        <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                                        <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
                                         <span>Actualizar</span>
                                     </button>
                                 </div>
@@ -960,18 +980,16 @@ export default function AdminPage() {
 
                             <div
                                 ref={auditScrollContainerRef}
-                                className={`relative overflow-x-auto rounded-3xl border border-slate-200 dark:border-slate-800 custom-scrollbar shadow-inner bg-slate-50/20 dark:bg-black/10 transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}
+                                className={`relative overflow-x-auto rounded-[2rem] border border-slate-100 dark:border-slate-800 custom-scrollbar shadow-inner bg-slate-50/20 dark:bg-black/10 transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}
                             >
                                 <table className="w-full text-left border-separate border-spacing-0 min-w-[900px]">
                                     <thead>
                                         <tr>
-                                            <th className="py-5 px-3 md:px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-30 border-b-2 border-slate-100 dark:border-slate-800 rounded-tl-3xl shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)]">
-                                                <div className="flex items-center gap-2">
-                                                    Miembro
-                                                </div>
+                                            <th className="py-6 px-3 md:px-8 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-30 border-b-2 border-slate-100 dark:border-slate-800 shadow-[4px_0_15px_-5px_rgba(0,0,0,0.05)]">
+                                                INTEGRANTE
                                             </th>
-                                            <th className="py-5 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center border-b-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
-                                                Com.
+                                            <th className="py-6 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center border-b-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                                COM.
                                             </th>
                                             {(() => {
                                                 const year = 2026;
@@ -990,19 +1008,19 @@ export default function AdminPage() {
                                                         <th
                                                             key={i}
                                                             ref={isToday ? todayRef : null}
-                                                            className={`relative group py-5 px-3 text-[10px] font-black uppercase tracking-widest text-center border-b-2 transition-colors min-w-[70px] ${isToday
-                                                                ? 'text-blue-600 dark:text-blue-400 border-blue-500 bg-blue-50/30 dark:bg-blue-900/10'
-                                                                : 'text-slate-400 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50'
+                                                            className={`relative group py-6 px-3 text-[10px] font-black uppercase tracking-widest text-center border-b-2 transition-all min-w-[75px] ${isToday
+                                                                ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-500 bg-blue-50/50 dark:bg-blue-900/20'
+                                                                : 'text-slate-400 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
                                                                 }`}
                                                         >
-                                                            <div className="flex flex-col gap-0.5 items-center">
-                                                                <span className={isToday ? "scale-110 origin-center" : ""}>{format(date.date, 'dd')}</span>
-                                                                <span className="text-[8px] opacity-60 font-bold">{format(date.date, 'MMM', { locale: es })}</span>
+                                                            <div className="flex flex-col gap-1 items-center">
+                                                                <span className={isToday ? "scale-125 origin-center font-black" : ""}>{format(date.date, 'dd')}</span>
+                                                                <span className="text-[9px] opacity-60 font-black">{format(date.date, 'MMM', { locale: es })}</span>
 
                                                                 <button
                                                                     onClick={() => handleMarkAllPresent(date.str)}
-                                                                    className="mt-2 p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100 dark:border-emerald-800/50"
-                                                                    title="Marcar asistencia a todos en este día"
+                                                                    className="mt-3 p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all active:scale-95"
+                                                                    title="Marcar todos como presentes"
                                                                 >
                                                                     <Check size={12} strokeWidth={4} />
                                                                 </button>
@@ -1030,12 +1048,9 @@ export default function AdminPage() {
 
                                             sortedUsers.forEach(user => {
                                                 if (processedIds.has(user.id)) return;
-
                                                 const partner = user.partnerId ? sortedUsers.find(u => u.id === user.partnerId) : null;
-
                                                 finalRows.push(user);
                                                 processedIds.add(user.id);
-
                                                 if (partner && !processedIds.has(partner.id)) {
                                                     finalRows.push(partner);
                                                     processedIds.add(partner.id);
@@ -1058,18 +1073,24 @@ export default function AdminPage() {
                                                 const isSecondOfCouple = isPartOfCouple && !isFirstOfCouple;
 
                                                 return (
-                                                    <tr key={user.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group ${isPartOfCouple ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''}`}>
-                                                        <td className={`py-4 px-3 md:px-6 text-slate-900 dark:text-white font-black text-xs sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800/80 transition-colors border-r border-slate-100 dark:border-slate-800 z-20 shadow-[2px_0_10px_-4px_rgba(0,0,0,0.1)] ${isFirstOfCouple ? 'border-l-4 border-l-blue-400' : isSecondOfCouple ? 'border-l-4 border-l-blue-400' : ''}`}>
-                                                            <div className="flex items-center gap-2">
-                                                                {isSecondOfCouple && <span className="text-blue-400 font-bold ml-1">↳</span>}
-                                                                <div className="truncate max-w-[100px] sm:max-w-[150px] md:max-w-[200px]" title={user.fullName}>
+                                                    <tr key={user.id} className={`group hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all ${isPartOfCouple ? 'bg-slate-50/30 dark:bg-slate-800/20' : ''}`}>
+                                                        <td className={`py-5 px-3 md:px-8 text-slate-900 dark:text-white font-black text-[13px] sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all border-r-2 border-slate-100 dark:border-slate-800 z-20 shadow-[4px_0_15px_-5px_rgba(0,0,0,0.05)] ${isFirstOfCouple ? 'border-l-4 border-l-blue-500' : isSecondOfCouple ? 'border-l-4 border-l-blue-500' : ''}`}>
+                                                            <div className="flex items-center gap-3">
+                                                                {isSecondOfCouple ? (
+                                                                    <div className="w-5 flex justify-center">
+                                                                        <span className="text-blue-500/50 font-black">↳</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className={`w-2 h-2 rounded-full ${isPartOfCouple ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-700'}`} />
+                                                                )}
+                                                                <div className="truncate uppercase tracking-tight" title={user.fullName}>
                                                                     {user.fullName}
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="py-4 px-4 text-center border-r border-slate-100/50 dark:border-slate-800/50">
+                                                        <td className="py-5 px-4 text-center border-r border-slate-100 dark:border-slate-800">
                                                             {user.communityNumber && (
-                                                                <span className="inline-block px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black">
+                                                                <span className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black border border-slate-200 dark:border-slate-700">
                                                                     {user.communityNumber}
                                                                 </span>
                                                             )}
@@ -1087,27 +1108,25 @@ export default function AdminPage() {
                                                             const isPast = dateObj.date <= today;
 
                                                             return (
-                                                                <td key={idx} className={`py-4 px-2 text-center border-r border-slate-100/50 dark:border-slate-800/50 transition-colors ${isToday ? 'bg-blue-50/20 dark:bg-blue-900/5' : ''}`}>
+                                                                <td key={idx} className={`py-5 px-2 text-center border-r border-slate-100 dark:border-slate-800 transition-all ${isToday ? 'bg-blue-50/30 dark:bg-blue-900/20' : ''}`}>
                                                                     {isPresent ? (
                                                                         <button
                                                                             onClick={() => handleDeleteAttendance(user.id, dateObj.str)}
-                                                                            className="w-8 h-8 flex items-center justify-center font-black text-[10px] bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-xl shadow-sm hover:scale-110 hover:shadow-md transition-all active:scale-95 mx-auto"
-                                                                            title="Asistió - Haga clic para eliminar"
+                                                                            className="w-10 h-10 flex items-center justify-center font-black text-[12px] bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20 hover:scale-110 transition-all active:scale-95 mx-auto animate-in zoom-in duration-300"
+                                                                            title="Asistió - Clic para eliminar"
                                                                         >
                                                                             A
                                                                         </button>
                                                                     ) : isPast ? (
                                                                         <button
-                                                                            onClick={() => {
-                                                                                handleManualAttendance(user.qrCode, dateObj.str);
-                                                                            }}
-                                                                            className="w-8 h-8 flex items-center justify-center font-black text-[10px] rounded-xl transition-all mx-auto bg-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white dark:bg-rose-900/30 dark:text-rose-400 cursor-pointer hover:scale-110 active:scale-95 shadow-sm"
-                                                                            title={isToday ? "Falta - Marcar hoy aquí o al lado del nombre" : "Falta - Haga clic para regularizar asistencia"}
+                                                                            onClick={() => handleManualAttendance(user.qrCode, dateObj.str)}
+                                                                            className="w-10 h-10 flex items-center justify-center font-black text-[12px] rounded-2xl transition-all mx-auto bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-500 hover:text-white border-2 border-rose-100 dark:border-rose-900/30 active:scale-95"
+                                                                            title="Falta - Clic para regularizar"
                                                                         >
                                                                             F
                                                                         </button>
                                                                     ) : (
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 mx-auto opacity-50" />
+                                                                        <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-800 mx-auto opacity-30" />
                                                                     )}
                                                                 </td>
                                                             );
@@ -1116,13 +1135,6 @@ export default function AdminPage() {
                                                 );
                                             });
                                         })()}
-                                        {users.length === 0 && (
-                                            <tr>
-                                                <td colSpan={10} className="py-8 text-center text-slate-400 text-sm">
-                                                    No hay miembros registrados para auditar.
-                                                </td>
-                                            </tr>
-                                        )}
                                     </tbody>
                                 </table>
                             </div>
