@@ -1073,22 +1073,30 @@ export default function AdminPage() {
                                                 const isSecondOfCouple = isPartOfCouple && !isFirstOfCouple;
 
                                                 return (
-                                                    <tr key={user.id} className={`group hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all ${isPartOfCouple ? 'bg-slate-50/30 dark:bg-slate-800/20' : ''}`}>
-                                                        <td className={`py-5 px-3 md:px-8 text-slate-900 dark:text-white font-black text-[13px] sticky left-0 bg-white dark:bg-slate-900 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all border-r-2 border-slate-100 dark:border-slate-800 z-20 shadow-[4px_0_15px_-5px_rgba(0,0,0,0.05)] ${isFirstOfCouple ? 'border-l-4 border-l-blue-500' : isSecondOfCouple ? 'border-l-4 border-l-blue-500' : ''}`}>
-                                                            <div className="flex items-center gap-3">
-                                                                {isSecondOfCouple ? (
-                                                                    <div className="w-5 flex justify-center">
-                                                                        <span className="text-blue-500/50 font-black">↳</span>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className={`w-2 h-2 rounded-full ${isPartOfCouple ? 'bg-blue-500' : 'bg-slate-300 dark:bg-slate-700'}`} />
+                                                    <tr
+                                                        key={user.id}
+                                                        className={`group transition-all duration-300 ${isFirstOfCouple ? 'bg-blue-50/30 dark:bg-blue-900/10' :
+                                                                isSecondOfCouple ? 'bg-blue-50/30 dark:bg-blue-900/10' :
+                                                                    'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                                            }`}
+                                                    >
+                                                        <td className={`py-4 px-3 md:px-8 text-slate-900 dark:text-white font-black text-[13px] sticky left-0 z-20 transition-all border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/20 dark:bg-blue-950/20' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
+                                                            }`}>
+                                                            <div className="flex items-center gap-3 relative">
+                                                                {isPartOfCouple && (
+                                                                    <div className={`absolute -left-3 md:-left-8 w-1.5 transition-all bg-blue-500/50 ${isFirstOfCouple ? 'h-[100%] top-[50%] rounded-t-full' :
+                                                                            'h-[100%] bottom-[50%] rounded-b-full'
+                                                                        }`} />
                                                                 )}
-                                                                <div className="truncate uppercase tracking-tight" title={user.fullName}>
-                                                                    {user.fullName}
+                                                                <div className="flex flex-col min-w-0">
+                                                                    <span className="truncate uppercase tracking-tight">{user.fullName}</span>
+                                                                    {isFirstOfCouple && <span className="text-[8px] text-blue-500 font-black uppercase mt-0.5 opacity-60 tracking-widest">Titular</span>}
+                                                                    {isSecondOfCouple && <span className="text-[8px] text-blue-500 font-black uppercase mt-0.5 opacity-60 tracking-widest">Cónyuge</span>}
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="py-5 px-4 text-center border-r border-slate-100 dark:border-slate-800">
+                                                        <td className={`py-4 px-4 text-center border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''
+                                                            }`}>
                                                             {user.communityNumber && (
                                                                 <span className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black border border-slate-200 dark:border-slate-700">
                                                                     {user.communityNumber}
@@ -1103,17 +1111,19 @@ export default function AdminPage() {
 
                                                             const todayStr = format(new Date(), 'dd/MM/yyyy');
                                                             const isToday = dateObj.str === todayStr;
-                                                            const today = new Date();
-                                                            today.setHours(0, 0, 0, 0);
-                                                            const isPast = dateObj.date <= today;
+                                                            const isPast = dateObj.date <= new Date();
 
                                                             return (
-                                                                <td key={idx} className={`py-5 px-2 text-center border-r border-slate-100 dark:border-slate-800 transition-all ${isToday ? 'bg-blue-50/30 dark:bg-blue-900/20' : ''}`}>
+                                                                <td
+                                                                    key={idx}
+                                                                    className={`py-4 px-2 text-center border-r border-slate-100 dark:border-slate-800 transition-all ${isToday ? 'bg-blue-100/30 dark:bg-blue-900/20' :
+                                                                            isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/5 dark:bg-blue-900/5' : ''
+                                                                        }`}
+                                                                >
                                                                     {isPresent ? (
                                                                         <button
                                                                             onClick={() => handleDeleteAttendance(user.id, dateObj.str)}
                                                                             className="w-10 h-10 flex items-center justify-center font-black text-[12px] bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20 hover:scale-110 transition-all active:scale-95 mx-auto animate-in zoom-in duration-300"
-                                                                            title="Asistió - Clic para eliminar"
                                                                         >
                                                                             A
                                                                         </button>
@@ -1121,7 +1131,6 @@ export default function AdminPage() {
                                                                         <button
                                                                             onClick={() => handleManualAttendance(user.qrCode, dateObj.str)}
                                                                             className="w-10 h-10 flex items-center justify-center font-black text-[12px] rounded-2xl transition-all mx-auto bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-500 hover:text-white border-2 border-rose-100 dark:border-rose-900/30 active:scale-95"
-                                                                            title="Falta - Clic para regularizar"
                                                                         >
                                                                             F
                                                                         </button>
