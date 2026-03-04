@@ -492,7 +492,7 @@ export default function AdminPage() {
             // No Artificial delay to prevent user-gesture expiration
             cardElement.style.transition = 'none'
             const canvas = await html2canvas(cardElement, {
-                scale: 2, // Moderate scale for mobile compatibility
+                scale: 1.5, // Slightly lower scale for much faster mobile rendering
                 useCORS: true,
                 backgroundColor: '#ffffff',
                 logging: false,
@@ -1599,7 +1599,7 @@ function MemberCard({ user, viewMode, isPartner }: { user: User, viewMode: 'grid
                     style={{ backgroundColor: '#ffffff', border: '2px solid #f3f4f6', minWidth: '300px', maxWidth: '300px' }}
                 >
                     <div className="w-full border-b pb-3 text-center" style={{ borderBottomColor: '#f3f4f6' }}>
-                        <h3 className="font-bold text-lg text-gray-800 uppercase tracking-wide truncate" style={{ color: '#1f2937' }}>{user.fullName}</h3>
+                        <h3 className="font-bold text-lg text-gray-800 uppercase tracking-wide leading-tight px-2" style={{ color: '#1f2937', wordBreak: 'break-word' }}>{user.fullName}</h3>
                         <div className="flex items-center justify-center gap-2 mt-1">
                             <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter" style={{ color: isPartner ? '#db2777' : '#3b82f6', backgroundColor: isPartner ? '#fdf2f8' : '#eff6ff' }}>
                                 {isPartner ? 'Cónyuge' : 'Miembro Activo'}
