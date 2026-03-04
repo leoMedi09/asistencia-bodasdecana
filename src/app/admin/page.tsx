@@ -512,7 +512,7 @@ export default function AdminPage() {
             cardElement.style.transition = ''
 
             // Convert canvas to blob and share
-            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png', 1.0))
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'))
 
             if (!blob) {
                 return
@@ -521,34 +521,24 @@ export default function AdminPage() {
             const fileName = `carnet.png`
             const file = new File([blob], fileName, { type: 'image/png' })
 
-            // On some mobile browsers, we must call navigator.share promptly
-            // or the user gesture will expire.
+            // Web Share API
             if (navigator.share) {
                 try {
                     await navigator.share({
-                        files: [file]
+                        files: [file],
+                        title: 'Carnet de Asistencia',
+                        text: `Comparto el carnet de ${user.fullName}`,
                     })
-                    // Success!
+                    // If shared or aborted, we stop here
                     return
                 } catch (shareErr: any) {
                     if (shareErr.name === 'AbortError') return
                     console.error('Share error:', shareErr)
+                    // If it failed for other reasons, use fallback
                 }
             }
 
-            // Fallback: Copy to clipboard if supported
-            try {
-                if (navigator.clipboard) {
-                    const data = [new ClipboardItem({ [blob.type]: blob })];
-                    await navigator.clipboard.write(data);
-                    alert('¡Copiado! Tu navegador no abrió el menú de compartir por seguridad, pero ya tienes el carnet copiado. \n\nEntra a WhatsApp y dale a "Pegar".');
-                    return;
-                }
-            } catch (clipErr) {
-                console.error('Clipboard error:', clipErr);
-            }
-
-            // Final fallback: Manual download
+            // Fallback for browsers without share support
             triggerManualDownload(blob, fileName)
         } catch (error) {
             console.error('Error sharing card:', error)
@@ -567,9 +557,9 @@ export default function AdminPage() {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
         if (isMobile) {
-            alert('¡Carnet descargado! \n\nNo se pudo abrir WhatsApp automáticamente ni copiar al portapapeles por seguridad. \n\nPero el carnet ya está en tu galería. Solo tienes que entrar a WhatsApp y elegirlo como una foto normal.')
+            alert('¡Carnet listo! \n\nTu navegador ha descargado la imagen. Ahora puedes adjuntarla en WhatsApp como cualquier otra foto de tu galería.')
         } else {
-            if (confirm('Tu navegador de PC no admite abrir el menú de compartir directamente.\n\nEl carnet se ha descargado. ¿Quieres abrir WhatsApp Web para enviarlo?')) {
+            if (confirm('Tu navegador de PC no admite abrir el menú de compartir directamente.\n\nEl carnet se ha descargado a tu computadora. ¿Quieres abrir WhatsApp Web para enviarlo?')) {
                 window.open('https://web.whatsapp.com/', '_blank');
             }
         }
