@@ -1374,6 +1374,7 @@ export default function AdminPage() {
                     </div>
                 )
             }
+
             <style jsx global>{`
         @media print {
           body { visibility: hidden; }
