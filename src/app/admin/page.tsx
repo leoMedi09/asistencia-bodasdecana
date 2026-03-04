@@ -519,27 +519,25 @@ export default function AdminPage() {
             }
 
             const fileName = `carnet-${user.id}.png`
-            const file = new File([blob], fileName, {
-                type: 'image/png',
-                lastModified: new Date().getTime()
-            })
+            const file = new File([blob], fileName, { type: 'image/png' })
 
-            // Web Share API with files is very picky. 
-            // We try to use it if available, but wrap it in a try-catch for better resilience.
-            const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
-
-            if (navigator.share && canShareFiles) {
+            // On some mobile browsers, we must call navigator.share promptly
+            // or the user gesture will expire.
+            if (navigator.share) {
                 try {
                     await navigator.share({
                         files: [file],
-                        title: `Carnet`,
-                        text: `Asistencia: ${user.fullName}`,
+                        title: 'Carnet',
                     })
+                    // Success!
+                    return
                 } catch (shareErr: any) {
-                    if (shareErr.name !== 'AbortError') {
-                        console.error('Share error:', shareErr)
-                        triggerManualDownload(blob, fileName)
-                    }
+                    // If the user cancelled, don't show error
+                    if (shareErr.name === 'AbortError') return
+
+                    console.error('Share error:', shareErr)
+                    // If it failed for other reasons, use fallback
+                    triggerManualDownload(blob, fileName)
                 }
             } else {
                 triggerManualDownload(blob, fileName)
@@ -558,13 +556,13 @@ export default function AdminPage() {
         link.download = fileName
         link.click()
 
-        // Check platform for better instruction
+        // Detect platform
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
         if (isMobile) {
-            alert('El carnet se ha descargado. Puedes enviarlo manualmente por WhatsApp adjuntando la imagen desde tu galería.')
+            alert('¡Imagen generada! Tu carnet se ha descargado a la galería. \n\nAhora ya puedes adjuntarlo manualmente en WhatsApp.')
         } else {
-            if (confirm('Tu navegador de escritorio no soporta el menú de compartir directamente.\n\nEl carnet se ha descargado a tu PC. ¿Quieres abrir WhatsApp Web para adjuntarlo manualmente?')) {
+            if (confirm('Tu navegador de PC no admite abrir el menú de compartir directamente.\n\nEl carnet se ha descargado. ¿Quieres abrir WhatsApp Web para enviarlo?')) {
                 window.open('https://web.whatsapp.com/', '_blank');
             }
         }
