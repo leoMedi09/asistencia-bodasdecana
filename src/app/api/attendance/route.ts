@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/prisma'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
         const { qrCode, date } = await request.json()
 

@@ -1,13 +1,13 @@
 import { prisma } from '@/lib/prisma'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url)
-        const userId = searchParams.get('userId')
-        const dateStr = searchParams.get('date') // formato dd/MM/yyyy
+        const userId = request.nextUrl.searchParams.get('userId')
+        const dateStr = request.nextUrl.searchParams.get('date') // formato dd/MM/yyyy
 
         if (!userId || !dateStr) {
             return NextResponse.json({ error: 'UserId and Date required' }, { status: 400 })

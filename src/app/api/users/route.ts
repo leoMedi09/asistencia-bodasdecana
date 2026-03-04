@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/prisma'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 export async function GET() {
     try {
@@ -15,7 +16,7 @@ export async function GET() {
     }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
         const { fullName, communityNumber } = await request.json()
 
@@ -36,10 +37,9 @@ export async function POST(request: Request) {
     }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url)
-        const id = searchParams.get('id')
+        const id = request.nextUrl.searchParams.get('id')
 
         if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 })
 
@@ -62,7 +62,7 @@ export async function DELETE(request: Request) {
     }
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
     try {
         const { id, fullName, communityNumber } = await request.json()
 
