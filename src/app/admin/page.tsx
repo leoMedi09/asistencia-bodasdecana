@@ -1069,15 +1069,15 @@ export default function AdminPage() {
 
                             <div
                                 ref={auditScrollContainerRef}
-                                className={`relative overflow-x-auto rounded-[2rem] border border-slate-100 dark:border-slate-800 custom-scrollbar shadow-inner bg-slate-50/20 dark:bg-black/10 transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}
+                                className={`relative overflow-x-auto rounded-[2rem] border border-slate-100 dark:border-slate-800 custom-scrollbar shadow-inner bg-slate-50/20 dark:bg-black/10 transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'} scroll-smooth`}
                             >
                                 <table className="w-full text-left border-separate border-spacing-0 min-w-[900px]">
                                     <thead>
                                         <tr>
-                                            <th className="py-6 px-3 md:px-8 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-30 border-b-2 border-slate-100 dark:border-slate-800 shadow-[4px_0_15px_-5px_rgba(0,0,0,0.05)]">
+                                            <th className="py-6 px-4 md:px-8 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-white dark:bg-slate-900 z-40 border-b-2 border-slate-100 dark:border-slate-800 shadow-[4px_0_15px_-5px_rgba(0,0,0,0.1)] min-w-[140px] md:min-w-[250px]">
                                                 INTEGRANTE
                                             </th>
-                                            <th className="py-6 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center border-b-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                            <th className="py-6 px-2 md:px-4 text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center border-b-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 z-30">
                                                 COM.
                                             </th>
                                             {(() => {
@@ -1097,8 +1097,8 @@ export default function AdminPage() {
                                                         <th
                                                             key={i}
                                                             ref={isToday ? todayRef : null}
-                                                            className={`relative group py-6 px-3 text-[10px] font-black uppercase tracking-widest text-center border-b-2 transition-all min-w-[75px] ${isToday
-                                                                ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-500 bg-blue-50/50 dark:bg-blue-900/20'
+                                                            className={`relative group py-6 px-2 md:px-3 text-[9px] md:text-[10px] font-black uppercase tracking-widest text-center border-b-2 transition-all min-w-[65px] md:min-w-[75px] ${isToday
+                                                                ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 shadow-[inset_0_-2px_0_0_currentColor]'
                                                                 : 'text-slate-400 border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
                                                                 }`}
                                                         >
@@ -1186,11 +1186,11 @@ export default function AdminPage() {
                                                                 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                                                             }`}
                                                     >
-                                                        <td className={`py-3 px-3 md:px-8 text-slate-900 dark:text-white font-black text-[13px] sticky left-0 z-20 transition-all border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/20 dark:bg-blue-950/20' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
+                                                        <td className={`py-4 px-4 md:px-8 text-slate-900 dark:text-white font-black text-[12px] md:text-[13px] sticky left-0 z-40 transition-all border-r border-slate-100 dark:border-slate-800 shadow-[4px_0_15px_-5px_rgba(0,0,0,0.1)] ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/40 dark:bg-blue-950/40' : 'bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800'
                                                             }`}>
-                                                            <div className="flex items-center gap-3 relative">
+                                                            <div className="flex items-center gap-2 md:gap-3 relative">
                                                                 {isPartOfCouple && (
-                                                                    <div className={`absolute -left-3 md:-left-8 w-1.5 transition-all bg-blue-500/50 ${isFirstOfCouple ? 'h-[100%] top-[50%] rounded-t-full' :
+                                                                    <div className={`absolute -left-4 md:-left-8 w-1 md:w-1.5 transition-all bg-blue-500/50 ${isFirstOfCouple ? 'h-[100%] top-[50%] rounded-t-full' :
                                                                         'h-[100%] bottom-[50%] rounded-b-full'
                                                                         }`} />
                                                                 )}
@@ -1201,10 +1201,10 @@ export default function AdminPage() {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className={`py-3 px-4 text-center border-r border-slate-100 dark:border-slate-800 ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''
+                                                        <td className={`py-3 px-2 md:px-4 text-center border-r border-slate-100 dark:border-slate-800 z-30 bg-inherit ${isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/10 dark:bg-blue-900/5' : ''
                                                             }`}>
                                                             {user.communityNumber && (
-                                                                <span className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black border border-slate-200 dark:border-slate-700">
+                                                                <span className="px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] md:text-[10px] font-black border border-slate-200 dark:border-slate-700">
                                                                     {user.communityNumber}
                                                                 </span>
                                                             )}
@@ -1229,14 +1229,14 @@ export default function AdminPage() {
                                                                     {isPresent ? (
                                                                         <button
                                                                             onClick={() => handleDeleteAttendance(user.id, dateObj.str)}
-                                                                            className="w-10 h-10 flex items-center justify-center font-black text-[12px] bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20 hover:scale-110 transition-all active:scale-95 mx-auto animate-in zoom-in duration-300"
+                                                                            className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center font-black text-[10px] md:text-[12px] bg-emerald-500 text-white rounded-xl md:rounded-2xl shadow-lg shadow-emerald-500/20 hover:scale-110 transition-all active:scale-95 mx-auto animate-in zoom-in duration-300"
                                                                         >
                                                                             A
                                                                         </button>
                                                                     ) : isPast ? (
                                                                         <button
                                                                             onClick={() => handleManualAttendance(user.qrCode, dateObj.str)}
-                                                                            className="w-10 h-10 flex items-center justify-center font-black text-[12px] rounded-2xl transition-all mx-auto bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-500 hover:text-white border-2 border-rose-100 dark:border-rose-900/30 active:scale-95"
+                                                                            className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center font-black text-[10px] md:text-[12px] rounded-xl md:rounded-2xl transition-all mx-auto bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-500 hover:text-white border-2 border-rose-100 dark:border-rose-900/30 active:scale-95"
                                                                         >
                                                                             F
                                                                         </button>
