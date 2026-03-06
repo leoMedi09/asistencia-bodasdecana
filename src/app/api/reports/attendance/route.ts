@@ -31,6 +31,7 @@ export async function GET() {
                 Nombre: record.user.fullName,
                 Comunidad: record.user.communityNumber || 'S/N',
                 qrCode: record.user.qrCode,
+                Status: record.status,
             };
         })
 

@@ -155,14 +155,15 @@ export default function AdminPage() {
         }
     }
 
-    const handleManualAttendance = async (qrCode: string, dateStr: string) => {
-        if (!confirm(`¿Desea registrar asistencia manual para el día ${dateStr}?`)) return
+    const handleManualAttendance = async (qrCode: string, dateStr: string, status: 'PRESENT' | 'JUSTIFIED' = 'PRESENT') => {
+        const statusText = status === 'JUSTIFIED' ? 'justificada' : 'manual';
+        if (!confirm(`¿Desea registrar asistencia ${statusText} para el día ${dateStr}?`)) return
 
         try {
             const res = await fetch('/api/attendance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ qrCode, date: dateStr }),
+                body: JSON.stringify({ qrCode, date: dateStr, status }),
             })
             if (res.ok) {
                 refreshAuditLogs()
@@ -337,13 +338,13 @@ export default function AdminPage() {
                     today.setHours(0, 0, 0, 0)
 
                     meetingDates.forEach(mDate => {
-                        const attended = allAttendances.some((att: any) =>
+                        const attRecord = allAttendances.find((att: any) =>
                             att.ID === u.id.toString().padStart(4, '0') &&
                             att.Fecha === mDate.str
                         )
 
-                        if (attended) {
-                            row.push('A')
+                        if (attRecord) {
+                            row.push(attRecord.Status === 'JUSTIFIED' ? 'J' : 'A')
                         } else if (mDate.dateObject <= today) {
                             row.push('F')
                         } else {
@@ -674,13 +675,13 @@ export default function AdminPage() {
                     today.setHours(0, 0, 0, 0)
 
                     meetingDates.forEach(mDate => {
-                        const attended = allAttendances.some((att: any) =>
+                        const attRecord = allAttendances.find((att: any) =>
                             att.ID === u.id.toString().padStart(4, '0') &&
                             att.Fecha === mDate.str
                         )
 
-                        if (attended) {
-                            row.push('A')
+                        if (attRecord) {
+                            row.push(attRecord.Status === 'JUSTIFIED' ? 'J' : 'A')
                         } else if (mDate.dateObject <= today) {
                             row.push('F')
                         } else {
@@ -752,6 +753,9 @@ export default function AdminPage() {
                                 data.cell.styles.textColor = [225, 29, 72];
                             } else if (cellText === 'A') {
                                 data.cell.styles.textColor = [5, 150, 105];
+                                data.cell.styles.fontStyle = 'bold';
+                            } else if (cellText === 'J') {
+                                data.cell.styles.textColor = [217, 119, 6]; // Amber/Justified
                                 data.cell.styles.fontStyle = 'bold';
                             }
                         }
@@ -1243,10 +1247,12 @@ export default function AdminPage() {
                                                             )}
                                                         </td>
                                                         {dates.map((dateObj, idx) => {
-                                                            const isPresent = auditLogs.some(log =>
+                                                            const attendanceRecord = auditLogs.find(log =>
                                                                 log.ID === user.id.toString().padStart(4, '0') &&
                                                                 log.Fecha === dateObj.str
                                                             );
+                                                            const isPresent = !!attendanceRecord;
+                                                            const isJustified = attendanceRecord?.Status === 'JUSTIFIED';
 
                                                             const todayStr = format(new Date(), 'dd/MM/yyyy');
                                                             const isToday = dateObj.str === todayStr;
@@ -1262,17 +1268,28 @@ export default function AdminPage() {
                                                                     {isPresent ? (
                                                                         <button
                                                                             onClick={() => handleDeleteAttendance(user.id, dateObj.str)}
-                                                                            className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center font-black text-[10px] md:text-[12px] bg-emerald-500 text-white rounded-xl md:rounded-2xl shadow-lg shadow-emerald-500/20 hover:scale-110 transition-all active:scale-95 mx-auto animate-in zoom-in duration-300"
+                                                                            className={`w-8 h-8 md:w-10 md:h-10 flex items-center justify-center font-black text-[10px] md:text-[12px] text-white rounded-xl md:rounded-2xl shadow-lg transition-all active:scale-95 mx-auto animate-in zoom-in duration-300 ${isJustified
+                                                                                ? 'bg-amber-500 shadow-amber-500/20'
+                                                                                : 'bg-emerald-500 shadow-emerald-500/20 hover:scale-110'
+                                                                                }`}
                                                                         >
-                                                                            A
+                                                                            {isJustified ? 'J' : 'A'}
                                                                         </button>
                                                                     ) : isPast ? (
-                                                                        <button
-                                                                            onClick={() => handleManualAttendance(user.qrCode, dateObj.str)}
-                                                                            className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center font-black text-[10px] md:text-[12px] rounded-xl md:rounded-2xl transition-all mx-auto bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-500 hover:text-white border-2 border-rose-100 dark:border-rose-900/30 active:scale-95"
-                                                                        >
-                                                                            F
-                                                                        </button>
+                                                                        <div className="flex flex-col gap-1 items-center">
+                                                                            <button
+                                                                                onClick={() => handleManualAttendance(user.qrCode, dateObj.str)}
+                                                                                className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center font-black text-[10px] md:text-[12px] rounded-xl md:rounded-2xl transition-all mx-auto bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-500 hover:text-white border-2 border-rose-100 dark:border-rose-900/30 active:scale-95"
+                                                                            >
+                                                                                F
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleManualAttendance(user.qrCode, dateObj.str, 'JUSTIFIED')}
+                                                                                className="text-[8px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-tighter hover:underline"
+                                                                            >
+                                                                                Justificar
+                                                                            </button>
+                                                                        </div>
                                                                     ) : (
                                                                         <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-800 mx-auto opacity-30" />
                                                                     )}

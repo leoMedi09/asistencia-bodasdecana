@@ -8,7 +8,7 @@ export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
     try {
-        const { qrCode, date } = await request.json()
+        const { qrCode, date, status } = await request.json()
 
         if (!qrCode) {
             return NextResponse.json({ error: 'QR Code required' }, { status: 400 })
@@ -69,7 +69,8 @@ export async function POST(request: NextRequest) {
         const attendance = await prisma.attendance.create({
             data: {
                 userId: user.id,
-                timestamp: attendanceDate
+                timestamp: attendanceDate,
+                status: status || 'PRESENT'
             },
         })
 
