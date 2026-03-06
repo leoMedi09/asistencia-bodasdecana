@@ -1011,15 +1011,27 @@ export default function AdminPage() {
                 ) : (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
                         {/* Resumen de Auditoría */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
                             <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center text-center group hover:border-emerald-500/30 transition-all">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Presentes Hoy</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Presentes (Mes)</span>
                                 <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
-                                    {auditLogs.filter(log => log.Fecha === format(new Date(), 'dd/MM/yyyy')).length}
+                                    {auditLogs.filter(log => {
+                                        const [d, m, y] = log.Fecha.split('/')
+                                        return parseInt(m) === selectedMonth + 1 && parseInt(y) === 2026 && log.Status !== 'JUSTIFIED'
+                                    }).length}
+                                </span>
+                            </div>
+                            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center text-center group hover:border-amber-500/30 transition-all">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Justificados (Mes)</span>
+                                <span className="text-3xl font-black text-amber-600 dark:text-amber-400">
+                                    {auditLogs.filter(log => {
+                                        const [d, m, y] = log.Fecha.split('/')
+                                        return parseInt(m) === selectedMonth + 1 && parseInt(y) === 2026 && log.Status === 'JUSTIFIED'
+                                    }).length}
                                 </span>
                             </div>
                             <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 shadow-xl flex flex-col items-center justify-center text-center group hover:border-rose-500/30 transition-all">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Faltas Hoy</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Faltas (Hoy)</span>
                                 <span className="text-3xl font-black text-rose-600 dark:text-rose-400">
                                     {users.length - auditLogs.filter(log => log.Fecha === format(new Date(), 'dd/MM/yyyy')).length}
                                 </span>
