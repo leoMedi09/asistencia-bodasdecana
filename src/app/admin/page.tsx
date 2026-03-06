@@ -1265,34 +1265,45 @@ export default function AdminPage() {
                                                                         isFirstOfCouple || isSecondOfCouple ? 'bg-blue-50/5 dark:bg-blue-900/5' : ''
                                                                         }`}
                                                                 >
-                                                                    {isPresent ? (
-                                                                        <button
-                                                                            onClick={() => handleDeleteAttendance(user.id, dateObj.str)}
-                                                                            className={`w-8 h-8 md:w-10 md:h-10 flex items-center justify-center font-black text-[10px] md:text-[12px] text-white rounded-xl md:rounded-2xl shadow-lg transition-all active:scale-95 mx-auto animate-in zoom-in duration-300 ${isJustified
-                                                                                ? 'bg-amber-500 shadow-amber-500/20'
-                                                                                : 'bg-emerald-500 shadow-emerald-500/20 hover:scale-110'
-                                                                                }`}
-                                                                        >
-                                                                            {isJustified ? 'J' : 'A'}
-                                                                        </button>
-                                                                    ) : isPast ? (
-                                                                        <div className="flex flex-col gap-1 items-center">
-                                                                            <button
-                                                                                onClick={() => handleManualAttendance(user.qrCode, dateObj.str)}
-                                                                                className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center font-black text-[10px] md:text-[12px] rounded-xl md:rounded-2xl transition-all mx-auto bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-500 hover:text-white border-2 border-rose-100 dark:border-rose-900/30 active:scale-95"
-                                                                            >
-                                                                                F
-                                                                            </button>
-                                                                            <button
-                                                                                onClick={() => handleManualAttendance(user.qrCode, dateObj.str, 'JUSTIFIED')}
-                                                                                className="text-[8px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-tighter hover:underline"
-                                                                            >
-                                                                                Justificar
-                                                                            </button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-800 mx-auto opacity-30" />
-                                                                    )}
+                                                                    <div className="flex flex-col gap-2 items-center">
+                                                                        {isPresent ? (
+                                                                            <>
+                                                                                <button
+                                                                                    onClick={() => handleDeleteAttendance(user.id, dateObj.str)}
+                                                                                    title="Quitar registro"
+                                                                                    className={`w-8 h-8 md:w-10 md:h-10 flex items-center justify-center font-black text-[10px] md:text-[12px] text-white rounded-xl md:rounded-2xl shadow-lg transition-all active:scale-95 mx-auto animate-in zoom-in duration-300 ${isJustified
+                                                                                        ? 'bg-amber-500 shadow-amber-500/20'
+                                                                                        : 'bg-emerald-500 shadow-emerald-500/20 hover:scale-110'
+                                                                                        }`}
+                                                                                >
+                                                                                    {isJustified ? 'J' : 'A'}
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => handleManualAttendance(user.qrCode, dateObj.str, isJustified ? 'PRESENT' : 'JUSTIFIED')}
+                                                                                    className="text-[8px] font-black text-slate-400 dark:text-slate-500 hover:text-blue-500 uppercase tracking-tighter hover:underline"
+                                                                                >
+                                                                                    {isJustified ? 'A asistencia' : 'Justificar'}
+                                                                                </button>
+                                                                            </>
+                                                                        ) : isPast ? (
+                                                                            <>
+                                                                                <button
+                                                                                    onClick={() => handleManualAttendance(user.qrCode, dateObj.str)}
+                                                                                    className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center font-black text-[10px] md:text-[12px] rounded-xl md:rounded-2xl transition-all mx-auto bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-500 hover:text-white border-2 border-rose-100 dark:border-rose-900/30 active:scale-95"
+                                                                                >
+                                                                                    F
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => handleManualAttendance(user.qrCode, dateObj.str, 'JUSTIFIED')}
+                                                                                    className="text-[8px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-tighter hover:underline"
+                                                                                >
+                                                                                    Justificar
+                                                                                </button>
+                                                                            </>
+                                                                        ) : (
+                                                                            <div className="w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-800 mx-auto opacity-30" />
+                                                                        )}
+                                                                    </div>
                                                                 </td>
                                                             );
                                                         })}
